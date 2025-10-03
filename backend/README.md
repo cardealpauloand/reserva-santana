@@ -12,15 +12,25 @@
 This Laravel backend is configured to use PostgreSQL and ships with migrations that reproduce the full commerce schema you shared (users, RBAC, catalog, stock, carts, orders, payments, shipping, returns, suppliers, and purchasing).
 
 ### Requirements
-- PHP 8.2+
-- Composer 2+
-- PostgreSQL 14+ with the extensions `pg_trgm` and `uuid-ossp`
+
+-   PHP 8.2+
+-   Composer 2+
+-   PostgreSQL 14+ with the extensions `pg_trgm` and `uuid-ossp`
 
 ### First-time setup
+
 1. Install PHP dependencies: `composer install`
 2. Copy `.env.example` to `.env` and adjust the `DB_*` variables to match your local PostgreSQL instance.
 3. Ensure the target database exists (`createdb reserva_santana`) and that the Postgres service is running.
 4. Run the migrations: `php artisan migrate`
+
+### Catalog data & API
+
+-   Seed the catalog with wine categories, sample products, and images using `php artisan db:seed`.
+-   Exposed REST endpoints for the SPA live under `/api/catalog` (e.g. `GET /api/catalog/products`, `GET /api/catalog/products/{id}`, `GET /api/catalog/categories`, `GET /api/catalog/categories/{slug}`) and return camel-case friendly payloads for the React app.
+-   Every product response includes pricing, merchandising metadata, the primary image URL, and category associations so the frontend can render detail, search, and listing pages.
+
+When running the frontend locally, point `VITE_API_URL` to `http://localhost:8000/api` so requests are routed to this backend.
 
 The `setup_postgres_extensions_and_types` migration will create the required extensions and enum types if they are not already present. The follow-up migrations create every table, index, and constraint described in your SQL reference, so you can start integrating the frontend or seed data right away.
 
@@ -28,13 +38,13 @@ The `setup_postgres_extensions_and_types` migration will create the required ext
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+-   [Simple, fast routing engine](https://laravel.com/docs/routing).
+-   [Powerful dependency injection container](https://laravel.com/docs/container).
+-   Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+-   Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+-   Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+-   [Robust background job processing](https://laravel.com/docs/queues).
+-   [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
@@ -52,14 +62,14 @@ We would like to extend our thanks to the following sponsors for funding Laravel
 
 ### Premium Partners
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+-   **[Vehikl](https://vehikl.com)**
+-   **[Tighten Co.](https://tighten.co)**
+-   **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
+-   **[64 Robots](https://64robots.com)**
+-   **[Curotec](https://www.curotec.com/services/technologies/laravel)**
+-   **[DevSquad](https://devsquad.com/hire-laravel-developers)**
+-   **[Redberry](https://redberry.international/laravel-development)**
+-   **[Active Logic](https://activelogic.com)**
 
 ## Contributing
 

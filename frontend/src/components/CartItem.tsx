@@ -1,7 +1,7 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
-import { Product } from "@/data/products";
+import type { Product } from "@/types/product";
 
 interface CartItemProps {
   item: Product & { quantity: number };
@@ -9,18 +9,19 @@ interface CartItemProps {
 
 export const CartItem = ({ item }: CartItemProps) => {
   const { updateQuantity, removeItem } = useCart();
+  const originLabel = item.origin ?? "Origem não informada";
 
   return (
     <div className="flex gap-4 py-4 border-b border-border">
       <img
-        src={item.image}
+        src={item.image ?? item.primaryImage?.url ?? "https://placehold.co/200x200?text=Vinho"}
         alt={item.name}
         className="w-24 h-24 object-cover rounded-lg"
       />
       <div className="flex-1 flex flex-col justify-between">
         <div>
           <h3 className="font-semibold text-foreground">{item.name}</h3>
-          <p className="text-sm text-muted-foreground">{item.origin}</p>
+          <p className="text-sm text-muted-foreground">{originLabel}</p>
         </div>
         <div className="flex items-center gap-3">
           <Button

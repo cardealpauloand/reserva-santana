@@ -1,34 +1,42 @@
 import { NavLink, useParams } from "react-router-dom";
+import { useMemo } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
-import { products, categoryMap, categoryNames } from "@/data/products";
 import { cn } from "@/lib/utils";
-
-const categoryCounts = Object.entries(categoryMap).reduce(
-  (acc, [slug, type]) => {
-    acc[slug] = products.filter((product) => product.type === type).length;
-    return acc;
-  },
-  {} as Record<string, number>
-);
-
-const categoryOptions = Object.entries(categoryNames).map(([slug, name]) => ({
-  slug,
-  name,
-}));
+import { useCategories, useCategory } from "@/hooks/useCatalog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Category = () => {
   const { category } = useParams<{ category: string }>();
-  
-  const categoryType = category ? categoryMap[category] : undefined;
-  const categoryTitle = category ? categoryNames[category] : "Categoria não encontrada";
-  
-  const filteredProducts = categoryType 
-    ? products.filter(p => p.type === categoryType)
-    : [];
+  const { data: categories, isLoading: isLoadingCategories } = useCategories();
+  const {
+    data: categoryDetails,
+    isLoading: isLoadingCategory,
+    isError,
+    error,
+  } = useCategory(category);
 
-  if (!categoryType) {
+  const categoryNotFound = isError && error.message.toLowerCase().includes("not");
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    (categories ?? []).forEach((item) => {
+      counts[item.slug] = item.productCount ?? 0;
+    });
+    return counts;
+  }, [categories]);
+
+  const categoryOptions = useMemo(
+    () =>
+      (categories ?? []).map((item) => ({
+        slug: item.slug,
+        name: item.name,
+      })),
+    [categories]
+  );
+
+  if (!category || categoryNotFound) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -43,6 +51,8 @@ const Category = () => {
     );
   }
 
+  const products = categoryDetails?.products ?? [];
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -51,10 +61,10 @@ const Category = () => {
           <div className="container px-4 md:px-6">
             <div className="max-w-3xl">
               <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
-                {categoryTitle}
+                {categoryDetails?.name ?? "Carregando..."}
               </h1>
               <p className="text-lg text-muted-foreground">
-                Descubra nossa seleção de {categoryTitle.toLowerCase()} com qualidade premium e preços especiais.
+                Descubra nossa seleção de {categoryDetails?.name?.toLowerCase() ?? "vinhos"} com qualidade premium e preços especiais.
               </p>
             </div>
           </div>
@@ -66,25 +76,31 @@ const Category = () => {
               <div className="space-y-4 rounded-xl border bg-card p-4 shadow-sm">
                 <h2 className="text-lg font-semibold text-foreground">Categorias</h2>
                 <nav className="flex gap-2 overflow-x-auto pb-2 md:flex-col md:gap-1 md:overflow-visible md:pb-0">
-                  {categoryOptions.map(({ slug, name }) => (
-                    <NavLink
-                      key={slug}
-                      to={`/categoria/${slug}`}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex min-w-[10rem] items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors md:min-w-0",
-                          isActive
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )
-                      }
-                    >
-                      <span>{name}</span>
-                      <span className="text-xs font-normal opacity-80">
-                        {categoryCounts[slug] ?? 0}
-                      </span>
-                    </NavLink>
-                  ))}
+                  {isLoadingCategories ? (
+                    Array.from({ length: 4 }).map((_, index) => (
+                      <Skeleton key={index} className="h-10 w-full rounded-md" />
+                    ))
+                  ) : (
+                    categoryOptions.map(({ slug, name }) => (
+                      <NavLink
+                        key={slug}
+                        to={`/categoria/${slug}`}
+                        className={({ isActive }) =>
+                          cn(
+                            "flex min-w-[10rem] items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors md:min-w-0",
+                            isActive
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          )
+                        }
+                      >
+                        <span>{name}</span>
+                        <span className="text-xs font-normal opacity-80">
+                          {categoryCounts[slug] ?? 0}
+                        </span>
+                      </NavLink>
+                    ))
+                  )}
                 </nav>
               </div>
             </aside>
@@ -92,13 +108,21 @@ const Category = () => {
             <div className="flex-1 space-y-6">
               <div className="flex items-center justify-between">
                 <p className="text-muted-foreground">
-                  {filteredProducts.length} {filteredProducts.length === 1 ? "produto encontrado" : "produtos encontrados"}
+                  {isLoadingCategory
+                    ? "Carregando produtos..."
+                    : `${products.length} ${products.length === 1 ? "produto encontrado" : "produtos encontrados"}`}
                 </p>
               </div>
 
-              {filteredProducts.length > 0 ? (
+              {isLoadingCategory ? (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {filteredProducts.map((product) => (
+                  {Array.from({ length: 8 }).map((_, index) => (
+                    <Skeleton key={index} className="aspect-[3/4] w-full rounded-xl" />
+                  ))}
+                </div>
+              ) : products.length > 0 ? (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {products.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </div>

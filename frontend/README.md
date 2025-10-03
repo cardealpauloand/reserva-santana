@@ -71,3 +71,7 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## API configuration
+
+Set `VITE_API_URL` in `.env` (or `.env.local`) to point to your Laravel backend, e.g. `http://localhost:8000/api`.

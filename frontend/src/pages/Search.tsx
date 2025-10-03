@@ -1,20 +1,29 @@
+import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
-import { products } from "@/data/products";
+import { Skeleton } from "@/components/ui/skeleton";
+import { fetchProducts } from "@/services/catalog";
 
 const Search = () => {
   const [searchParams] = useSearchParams();
-  const query = searchParams.get("q") || "";
-  
-  const filteredProducts = query 
-    ? products.filter(p => 
-        p.name.toLowerCase().includes(query.toLowerCase()) ||
-        p.origin.toLowerCase().includes(query.toLowerCase()) ||
-        p.type.toLowerCase().includes(query.toLowerCase())
-      )
-    : [];
+  const query = (searchParams.get("q") || "").trim();
+  const shouldSearch = query.length > 0;
+
+  const {
+    data: products,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["catalog", "search", query],
+    queryFn: () => fetchProducts({ search: query }),
+    enabled: shouldSearch,
+  });
+
+  const results = useMemo(() => (shouldSearch ? products ?? [] : []), [shouldSearch, products]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -37,19 +46,37 @@ const Search = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <p className="text-muted-foreground">
-                {filteredProducts.length} {filteredProducts.length === 1 ? 'produto encontrado' : 'produtos encontrados'}
+                {isLoading && shouldSearch
+                  ? "Carregando produtos..."
+                  : `${results.length} ${results.length === 1 ? "produto encontrado" : "produtos encontrados"}`}
               </p>
             </div>
 
-            {filteredProducts.length > 0 ? (
+            {isError && shouldSearch && (
+              <p className="text-center text-muted-foreground">
+                Não foi possível realizar a busca: {error.message}
+              </p>
+            )}
+
+            {isLoading && shouldSearch ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts.map((product) => (
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <Skeleton key={index} className="aspect-[3/4] w-full rounded-xl" />
+                ))}
+              </div>
+            ) : results.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {results.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-16">
-                <p className="text-muted-foreground">Nenhum produto encontrado para "{query}".</p>
+                <p className="text-muted-foreground">
+                  {shouldSearch
+                    ? `Nenhum produto encontrado para "${query}".`
+                    : "Digite um termo de busca para encontrar produtos."}
+                </p>
               </div>
             )}
           </div>
