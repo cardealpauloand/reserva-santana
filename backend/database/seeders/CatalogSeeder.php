@@ -206,6 +206,7 @@ class CatalogSeeder extends Seeder
                     'alcohol' => $productData['alcohol'] ?? null,
                     'temperature' => $productData['temperature'] ?? null,
                     'description' => $productData['description'] ?? null,
+                    'stock_quantity' => $productData['stock_quantity'] ?? random_int(25, 150),
                     'active' => true,
                 ]);
 

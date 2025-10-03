@@ -27,6 +27,7 @@ class Product extends Model
         'price' => 'decimal:2',
         'original_price' => 'decimal:2',
         'rating' => 'integer',
+        'stock_quantity' => 'integer',
     ];
 
     /**

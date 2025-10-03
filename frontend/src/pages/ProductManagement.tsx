@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -35,169 +35,215 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, History, Package } from "lucide-react";
+import {
+  listAdminProducts,
+  createAdminProduct,
+  updateAdminProduct,
+  deleteAdminProduct,
+  type AdminProduct,
+  type AdminProductPayload,
+} from "@/services/admin/products";
+import { Plus, Pencil, Trash2, Package } from "lucide-react";
 import { Loader2 } from "lucide-react";
 
-interface Product {
-  id: string;
+interface FormState {
   name: string;
   origin: string;
   type: string;
-  price: number;
-  stock_quantity: number;
-  image: string;
-  rating: number;
+  price: string;
+  stockQuantity: string;
+  rating: string;
+  imageUrl: string;
+  description: string;
 }
 
-interface PriceAudit {
-  id: string;
-  product_id: string;
-  old_price: number;
-  new_price: number;
-  changed_at: string;
-  reason: string | null;
-  products: { name: string };
-}
+const TYPE_OPTIONS = ["Tinto", "Branco", "Rosé", "Espumante"] as const;
+type ProductTypeOption = (typeof TYPE_OPTIONS)[number];
+const DEFAULT_PRODUCT_TYPE = TYPE_OPTIONS[0];
+
+const isTypeOption = (value: string | null | undefined): value is ProductTypeOption => {
+  if (!value) {
+    return false;
+  }
+
+  return TYPE_OPTIONS.includes(value as ProductTypeOption);
+};
+
+const createInitialFormState = (): FormState => ({
+  name: "",
+  origin: "",
+  type: DEFAULT_PRODUCT_TYPE,
+  price: "",
+  stockQuantity: "",
+  rating: "",
+  imageUrl: "",
+  description: "",
+});
 
 const ProductManagement = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [priceAudits, setPriceAudits] = useState<PriceAudit[]>([]);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState<FormState>(() => createInitialFormState());
   const { toast } = useToast();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    origin: "",
-    type: "Tinto",
-    price: "",
-    stock_quantity: "",
-    image: "",
-    rating: "5",
-  });
+  const resetForm = () => setFormData(createInitialFormState());
+
+  const fetchProducts = useCallback(
+    async (showSpinner = false) => {
+      try {
+        if (showSpinner) {
+          setLoading(true);
+        }
+
+        const data = await listAdminProducts();
+        setProducts(data);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Não foi possível carregar os produtos";
+
+        toast({
+          title: "Erro ao carregar produtos",
+          description: message,
+          variant: "destructive",
+        });
+      } finally {
+        if (showSpinner) {
+          setLoading(false);
+        }
+      }
+    },
+    [toast]
+  );
 
   useEffect(() => {
-    fetchProducts();
-    fetchPriceAudits();
-  }, []);
+    void fetchProducts(true);
+  }, [fetchProducts]);
 
-  const fetchProducts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("name");
-
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error: any) {
-      toast({
-        title: "Erro ao carregar produtos",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPriceAudits = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("price_audit")
-        .select("*, products(name)")
-        .order("changed_at", { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      setPriceAudits(data || []);
-    } catch (error: any) {
-      console.error("Erro ao carregar auditoria:", error);
-    }
-  };
-
-  const handleOpenDialog = (product?: Product) => {
+  const handleOpenDialog = (product?: AdminProduct) => {
     if (product) {
+      const normalizedType = isTypeOption(product.type)
+        ? product.type
+        : DEFAULT_PRODUCT_TYPE;
+
       setEditingProduct(product);
       setFormData({
         name: product.name,
-        origin: product.origin,
-        type: product.type,
+        origin: product.origin ?? "",
+        type: normalizedType,
         price: product.price.toString(),
-        stock_quantity: product.stock_quantity.toString(),
-        image: product.image,
-        rating: product.rating.toString(),
+        stockQuantity: product.stockQuantity.toString(),
+        rating: product.rating !== null ? product.rating.toString() : "",
+        imageUrl: product.imageUrl ?? "",
+        description: product.description ?? "",
       });
     } else {
       setEditingProduct(null);
-      setFormData({
-        name: "",
-        origin: "",
-        type: "Tinto",
-        price: "",
-        stock_quantity: "",
-        image: "",
-        rating: "5",
-      });
+      resetForm();
     }
+
     setDialogOpen(true);
   };
 
+  const handleDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open);
+
+    if (!open) {
+      setEditingProduct(null);
+      resetForm();
+      setSubmitting(false);
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!formData.name || !formData.origin || !formData.price) {
+    if (!formData.name.trim() || !formData.price.trim()) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios",
+        description: "Preencha nome e preço do produto",
         variant: "destructive",
       });
       return;
     }
 
+    const priceValue = Number(formData.price);
+    if (Number.isNaN(priceValue) || priceValue < 0) {
+      toast({
+        title: "Preço inválido",
+        description: "Informe um preço válido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const stockValue = formData.stockQuantity.trim()
+      ? Number(formData.stockQuantity)
+      : 0;
+
+    if (Number.isNaN(stockValue) || stockValue < 0) {
+      toast({
+        title: "Estoque inválido",
+        description: "Informe uma quantidade de estoque válida",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const ratingValue = formData.rating.trim()
+      ? Number(formData.rating)
+      : null;
+
+    if (ratingValue !== null && (Number.isNaN(ratingValue) || ratingValue < 0 || ratingValue > 5)) {
+      toast({
+        title: "Avaliação inválida",
+        description: "A avaliação deve estar entre 0 e 5",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const payload: AdminProductPayload = {
+      name: formData.name.trim(),
+      origin: formData.origin.trim() || null,
+      type: formData.type || null,
+      price: priceValue,
+      stock_quantity: stockValue,
+      rating: ratingValue,
+      description: formData.description.trim() || null,
+      image_url: formData.imageUrl.trim() || null,
+      active: editingProduct?.active ?? true,
+    };
+
     setSubmitting(true);
+
     try {
-      const productData = {
-        name: formData.name,
-        origin: formData.origin,
-        type: formData.type,
-        price: parseFloat(formData.price),
-        stock_quantity: parseInt(formData.stock_quantity) || 0,
-        image: formData.image || "/placeholder.svg",
-        rating: parseFloat(formData.rating),
-      };
-
       if (editingProduct) {
-        const { error } = await supabase
-          .from("products")
-          .update(productData)
-          .eq("id", editingProduct.id);
-
-        if (error) throw error;
+        await updateAdminProduct(editingProduct.id, payload);
         toast({
           title: "Produto atualizado",
-          description: "O produto foi atualizado com sucesso",
+          description: "As informações do produto foram salvas",
         });
       } else {
-        const { error } = await supabase.from("products").insert([productData]);
-
-        if (error) throw error;
+        await createAdminProduct(payload);
         toast({
           title: "Produto criado",
-          description: "O produto foi criado com sucesso",
+          description: "O produto foi cadastrado com sucesso",
         });
       }
 
-      setDialogOpen(false);
-      fetchProducts();
-      fetchPriceAudits();
-    } catch (error: any) {
+      handleDialogOpenChange(false);
+      await fetchProducts();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Não foi possível salvar o produto";
+
       toast({
         title: "Erro ao salvar produto",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -205,22 +251,25 @@ const ProductManagement = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+  const handleDelete = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir este produto?")) {
+      return;
+    }
 
     try {
-      const { error } = await supabase.from("products").delete().eq("id", id);
-
-      if (error) throw error;
+      await deleteAdminProduct(id);
       toast({
         title: "Produto excluído",
-        description: "O produto foi excluído com sucesso",
+        description: "O produto foi removido com sucesso",
       });
-      fetchProducts();
-    } catch (error: any) {
+      await fetchProducts();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Não foi possível excluir o produto";
+
       toast({
         title: "Erro ao excluir produto",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     }
@@ -254,145 +303,83 @@ const ProductManagement = () => {
             </Button>
           </div>
 
-          <Tabs defaultValue="products" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="products">
-                <Package className="h-4 w-4 mr-2" />
-                Produtos
-              </TabsTrigger>
-              <TabsTrigger value="audit">
-                <History className="h-4 w-4 mr-2" />
-                Auditoria de Preços
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="products">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Lista de Produtos</CardTitle>
-                  <CardDescription>
-                    Gerencie todos os produtos cadastrados
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Origem</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Preço</TableHead>
-                        <TableHead>Estoque</TableHead>
-                        <TableHead>Avaliação</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Lista de Produtos
+              </CardTitle>
+              <CardDescription>
+                Visualize e atualize as informações dos produtos cadastrados
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Origem</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Preço</TableHead>
+                    <TableHead>Estoque</TableHead>
+                    <TableHead>Avaliação</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                        Nenhum produto cadastrado.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    products.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>{product.origin ?? "—"}</TableCell>
+                        <TableCell>{product.type ?? "—"}</TableCell>
+                        <TableCell>
+                          {product.price.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </TableCell>
+                        <TableCell>{product.stockQuantity}</TableCell>
+                        <TableCell>
+                          {product.rating !== null
+                            ? `${Number(product.rating).toFixed(1)} ⭐`
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenDialog(product)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(product.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {products.map((product) => (
-                        <TableRow key={product.id}>
-                          <TableCell className="font-medium">
-                            {product.name}
-                          </TableCell>
-                          <TableCell>{product.origin}</TableCell>
-                          <TableCell>{product.type}</TableCell>
-                          <TableCell>
-                            R$ {product.price.toFixed(2)}
-                          </TableCell>
-                          <TableCell>{product.stock_quantity}</TableCell>
-                          <TableCell>{product.rating.toFixed(1)} ⭐</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleOpenDialog(product)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(product.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="audit">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Histórico de Alterações de Preço</CardTitle>
-                  <CardDescription>
-                    Acompanhe todas as mudanças de preço realizadas
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Produto</TableHead>
-                        <TableHead>Preço Anterior</TableHead>
-                        <TableHead>Preço Novo</TableHead>
-                        <TableHead>Diferença</TableHead>
-                        <TableHead>Motivo</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {priceAudits.map((audit) => {
-                        const diff = audit.new_price - audit.old_price;
-                        const diffPercent = (
-                          (diff / audit.old_price) *
-                          100
-                        ).toFixed(1);
-                        return (
-                          <TableRow key={audit.id}>
-                            <TableCell>
-                              {new Date(audit.changed_at).toLocaleString(
-                                "pt-BR"
-                              )}
-                            </TableCell>
-                            <TableCell>{audit.products.name}</TableCell>
-                            <TableCell>
-                              R$ {audit.old_price.toFixed(2)}
-                            </TableCell>
-                            <TableCell>
-                              R$ {audit.new_price.toFixed(2)}
-                            </TableCell>
-                            <TableCell>
-                              <span
-                                className={
-                                  diff > 0 ? "text-green-600" : "text-red-600"
-                                }
-                              >
-                                {diff > 0 ? "+" : ""}R$ {diff.toFixed(2)} (
-                                {diffPercent}%)
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              {audit.reason || "Sem motivo especificado"}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
       </main>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
@@ -409,19 +396,19 @@ const ProductManagement = () => {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                onChange={(event) =>
+                  setFormData({ ...formData, name: event.target.value })
                 }
               />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="origin">Origem *</Label>
+              <Label htmlFor="origin">Origem</Label>
               <Input
                 id="origin"
                 value={formData.origin}
-                onChange={(e) =>
-                  setFormData({ ...formData, origin: e.target.value })
+                onChange={(event) =>
+                  setFormData({ ...formData, origin: event.target.value })
                 }
               />
             </div>
@@ -434,14 +421,15 @@ const ProductManagement = () => {
                   setFormData({ ...formData, type: value })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger id="type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Tinto">Tinto</SelectItem>
-                  <SelectItem value="Branco">Branco</SelectItem>
-                  <SelectItem value="Rosé">Rosé</SelectItem>
-                  <SelectItem value="Espumante">Espumante</SelectItem>
+                  {TYPE_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -453,9 +441,10 @@ const ProductManagement = () => {
                   id="price"
                   type="number"
                   step="0.01"
+                  min="0"
                   value={formData.price}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price: e.target.value })
+                  onChange={(event) =>
+                    setFormData({ ...formData, price: event.target.value })
                   }
                 />
               </div>
@@ -465,16 +454,17 @@ const ProductManagement = () => {
                 <Input
                   id="stock"
                   type="number"
-                  value={formData.stock_quantity}
-                  onChange={(e) =>
-                    setFormData({ ...formData, stock_quantity: e.target.value })
+                  min="0"
+                  value={formData.stockQuantity}
+                  onChange={(event) =>
+                    setFormData({ ...formData, stockQuantity: event.target.value })
                   }
                 />
               </div>
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="rating">Avaliação (1-5)</Label>
+              <Label htmlFor="rating">Avaliação (0-5)</Label>
               <Input
                 id="rating"
                 type="number"
@@ -482,8 +472,8 @@ const ProductManagement = () => {
                 min="0"
                 max="5"
                 value={formData.rating}
-                onChange={(e) =>
-                  setFormData({ ...formData, rating: e.target.value })
+                onChange={(event) =>
+                  setFormData({ ...formData, rating: event.target.value })
                 }
               />
             </div>
@@ -492,11 +482,23 @@ const ProductManagement = () => {
               <Label htmlFor="image">URL da Imagem</Label>
               <Input
                 id="image"
-                value={formData.image}
-                onChange={(e) =>
-                  setFormData({ ...formData, image: e.target.value })
+                value={formData.imageUrl}
+                onChange={(event) =>
+                  setFormData({ ...formData, imageUrl: event.target.value })
                 }
                 placeholder="https://exemplo.com/imagem.jpg"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="description">Descrição</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(event) =>
+                  setFormData({ ...formData, description: event.target.value })
+                }
+                rows={4}
               />
             </div>
           </div>
@@ -504,7 +506,7 @@ const ProductManagement = () => {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setDialogOpen(false)}
+              onClick={() => handleDialogOpenChange(false)}
               disabled={submitting}
             >
               Cancelar
