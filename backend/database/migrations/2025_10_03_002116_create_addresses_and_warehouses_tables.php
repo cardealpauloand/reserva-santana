@@ -30,7 +30,9 @@ return new class extends Migration
             $table->timestampTz('updated_at')->default(DB::raw('CURRENT_TIMESTAMP'));
         });
 
-        DB::statement('ALTER TABLE addresses ADD COLUMN type address_type NOT NULL');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE addresses ADD COLUMN type address_type NOT NULL');
+        }
 
         Schema::create('warehouses', function (Blueprint $table) {
             $table->bigIncrements('id');

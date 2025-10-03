@@ -69,4 +69,20 @@ class Product extends Model
             ->where('is_primary', true)
             ->orderBy('position');
     }
+
+    /**
+     * Stock records for the product across warehouses.
+     */
+    public function stockRecords(): HasMany
+    {
+        return $this->hasMany(ProductStock::class, 'product_id');
+    }
+
+    /**
+     * Inventory movements linked to the product.
+     */
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class, 'product_id');
+    }
 }

@@ -32,8 +32,10 @@ return new class extends Migration
             $table->timestampTz('updated_at')->default(DB::raw('CURRENT_TIMESTAMP'));
         });
 
-        DB::statement('ALTER TABLE cart_items ADD CONSTRAINT cart_items_quantity_check CHECK (quantity > 0)');
-        DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS uq_cart_items_cart_prod_var ON cart_items (cart_id, product_id, COALESCE(variant_id, 0))');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE cart_items ADD CONSTRAINT cart_items_quantity_check CHECK (quantity > 0)');
+            DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS uq_cart_items_cart_prod_var ON cart_items (cart_id, product_id, COALESCE(variant_id, 0))');
+        }
     }
 
     /**

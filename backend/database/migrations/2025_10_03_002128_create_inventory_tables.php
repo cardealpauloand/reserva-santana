@@ -54,7 +54,9 @@ return new class extends Migration
             $table->timestampTz('updated_at')->default(DB::raw('CURRENT_TIMESTAMP'));
         });
 
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_stock_movement_prod ON stock_movement(product_id, created_at)');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('CREATE INDEX IF NOT EXISTS idx_stock_movement_prod ON stock_movement(product_id, created_at)');
+        }
     }
 
     /**

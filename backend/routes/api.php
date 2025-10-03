@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -15,4 +16,10 @@ Route::prefix('catalog')->group(function (): void {
 
 Route::prefix('admin')->group(function (): void {
     Route::apiResource('products', AdminProductController::class)->except(['create', 'edit']);
+
+    Route::prefix('stock')->group(function (): void {
+        Route::get('products', [StockController::class, 'products']);
+        Route::get('movements', [StockController::class, 'movements']);
+        Route::post('movements', [StockController::class, 'storeMovement']);
+    });
 });

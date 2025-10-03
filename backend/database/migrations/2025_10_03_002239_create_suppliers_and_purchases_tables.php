@@ -41,7 +41,9 @@ return new class extends Migration
             $table->timestampTz('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
         });
 
-        DB::statement('ALTER TABLE purchase_order_items ADD CONSTRAINT purchase_order_items_quantity_check CHECK (quantity > 0)');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE purchase_order_items ADD CONSTRAINT purchase_order_items_quantity_check CHECK (quantity > 0)');
+        }
     }
 
     /**

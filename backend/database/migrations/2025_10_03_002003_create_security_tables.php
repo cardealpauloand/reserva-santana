@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
         Schema::create('roles', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name', 100)->unique();
@@ -68,6 +72,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
         Schema::dropIfExists('audit_log');
         Schema::dropIfExists('auth_tokens');
         Schema::dropIfExists('user_roles');

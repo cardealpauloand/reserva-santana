@@ -10,6 +10,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
         DB::statement('CREATE EXTENSION IF NOT EXISTS pg_trgm');
         DB::statement('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
 
@@ -49,6 +53,10 @@ SQL);
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
         DB::statement('DROP TYPE IF EXISTS token_type');
         DB::statement('DROP TYPE IF EXISTS address_type');
         DB::statement('DROP TYPE IF EXISTS shipment_status');

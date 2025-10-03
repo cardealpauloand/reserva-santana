@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,75 +8,49 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Package, Plus, History, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-interface Product {
-  id: string;
-  name: string;
-  type: string;
-  stock_quantity: number;
-  price: number;
-}
-
-interface StockMovement {
-  id: string;
-  product_id: string;
-  quantity: number;
-  movement_type: string;
-  reason: string | null;
-  created_at: string;
-  products: {
-    name: string;
-  };
-}
+import {
+  StockProduct,
+  StockMovement,
+  listStockProducts,
+  listStockMovements,
+  createStockMovement,
+} from "@/services/admin/stock";
 
 const StockManagement = () => {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<StockProduct[]>([]);
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState("");
+  const [selectedProductId, setSelectedProductId] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [movementType, setMovementType] = useState("entrada");
+  const [movementType, setMovementType] = useState<StockMovement["movementType"]>("entrada");
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
   }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      
-      const { data: productsData, error: productsError } = await supabase
-        .from("products")
-        .select("*")
-        .order("name");
 
-      if (productsError) throw productsError;
+      const [productsData, movementsData] = await Promise.all([
+        listStockProducts(),
+        listStockMovements(20),
+      ]);
 
-      const { data: movementsData, error: movementsError } = await supabase
-        .from("stock_movements")
-        .select("*, products(name)")
-        .order("created_at", { ascending: false })
-        .limit(20);
-
-      if (movementsError) throw movementsError;
-
-      setProducts(productsData || []);
-      setMovements(movementsData || []);
+      setProducts(productsData);
+      setMovements(movementsData);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar dados",
-        description: error.message,
+        description: error.message ?? "Não foi possível carregar as informações de estoque.",
         variant: "destructive",
       });
     } finally {
@@ -84,25 +58,24 @@ const StockManagement = () => {
     }
   };
 
-  const handleSubmitMovement = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedProduct || !quantity || !user) return;
+  const handleSubmitMovement = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!selectedProductId || !quantity) {
+      return;
+    }
 
     try {
       setSubmitting(true);
-      
-      const { error } = await supabase
-        .from("stock_movements")
-        .insert({
-          product_id: selectedProduct,
-          quantity: parseInt(quantity),
-          movement_type: movementType,
-          reason: reason || null,
-          created_by: user.id,
-        });
 
-      if (error) throw error;
+      const payload = {
+        productId: Number(selectedProductId),
+        quantity: Number(quantity),
+        movementType,
+        reason: reason.trim() ? reason.trim() : null,
+      } as const;
+
+      const movement = await createStockMovement(payload);
 
       toast({
         title: "Movimentação registrada",
@@ -110,14 +83,22 @@ const StockManagement = () => {
       });
 
       setDialogOpen(false);
-      setSelectedProduct("");
+      setSelectedProductId("");
       setQuantity("");
       setReason("");
-      fetchData();
+
+      setMovements((current) => [movement, ...current].slice(0, 20));
+      setProducts((current) =>
+        current.map((product) =>
+          product.id === movement.productId && movement.currentQuantity !== null
+            ? { ...product, stockQuantity: movement.currentQuantity }
+            : product
+        )
+      );
     } catch (error: any) {
       toast({
         title: "Erro ao registrar movimentação",
-        description: error.message,
+        description: error.message ?? "Não foi possível registrar a movimentação de estoque.",
         variant: "destructive",
       });
     } finally {
@@ -142,16 +123,11 @@ const StockManagement = () => {
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Gerenciamento de Estoque
-          </h1>
-          <p className="text-muted-foreground">
-            Gerencie o estoque dos produtos da loja
-          </p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Gerenciamento de Estoque</h1>
+          <p className="text-muted-foreground">Gerencie o estoque dos produtos da loja</p>
         </div>
 
         <div className="grid gap-6">
-          {/* Current Stock */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -159,9 +135,7 @@ const StockManagement = () => {
                   <Package className="h-5 w-5" />
                   Estoque Atual
                 </CardTitle>
-                <CardDescription>
-                  Visualize a quantidade disponível de cada produto
-                </CardDescription>
+                <CardDescription>Visualize a quantidade disponível de cada produto</CardDescription>
               </div>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
@@ -173,21 +147,19 @@ const StockManagement = () => {
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Registrar Movimentação</DialogTitle>
-                    <DialogDescription>
-                      Adicione entrada, saída ou ajuste de estoque
-                    </DialogDescription>
+                    <DialogDescription>Adicione entrada, saída ou ajuste de estoque</DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmitMovement} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="product">Produto</Label>
-                      <Select value={selectedProduct} onValueChange={setSelectedProduct} required>
+                      <Select value={selectedProductId} onValueChange={setSelectedProductId} required>
                         <SelectTrigger id="product">
                           <SelectValue placeholder="Selecione um produto" />
                         </SelectTrigger>
                         <SelectContent>
                           {products.map((product) => (
-                            <SelectItem key={product.id} value={product.id}>
-                              {product.name} (Estoque: {product.stock_quantity})
+                            <SelectItem key={product.id} value={String(product.id)}>
+                              {product.name} (Estoque: {product.stockQuantity})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -196,7 +168,7 @@ const StockManagement = () => {
 
                     <div className="space-y-2">
                       <Label htmlFor="movement-type">Tipo de Movimentação</Label>
-                      <Select value={movementType} onValueChange={setMovementType}>
+                      <Select value={movementType} onValueChange={(value) => setMovementType(value as StockMovement["movementType"])}>
                         <SelectTrigger id="movement-type">
                           <SelectValue />
                         </SelectTrigger>
@@ -215,7 +187,7 @@ const StockManagement = () => {
                         type="number"
                         min="1"
                         value={quantity}
-                        onChange={(e) => setQuantity(e.target.value)}
+                        onChange={(event) => setQuantity(event.target.value)}
                         required
                       />
                     </div>
@@ -225,7 +197,7 @@ const StockManagement = () => {
                       <Input
                         id="reason"
                         value={reason}
-                        onChange={(e) => setReason(e.target.value)}
+                        onChange={(event) => setReason(event.target.value)}
                         placeholder="Ex: Reposição de estoque, venda, ajuste de inventário"
                       />
                     </div>
@@ -258,19 +230,19 @@ const StockManagement = () => {
                   {products.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>{product.type}</TableCell>
+                      <TableCell>{product.type ?? "-"}</TableCell>
                       <TableCell>R$ {product.price.toFixed(2)}</TableCell>
                       <TableCell className="text-right">
                         <span
                           className={
-                            product.stock_quantity < 10
+                            product.stockQuantity < 10
                               ? "text-destructive font-semibold"
-                              : product.stock_quantity < 50
+                              : product.stockQuantity < 50
                               ? "text-warning font-semibold"
                               : "text-success"
                           }
                         >
-                          {product.stock_quantity}
+                          {product.stockQuantity}
                         </span>
                       </TableCell>
                     </TableRow>
@@ -280,16 +252,13 @@ const StockManagement = () => {
             </CardContent>
           </Card>
 
-          {/* Recent Movements */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <History className="h-5 w-5" />
                 Histórico de Movimentações
               </CardTitle>
-              <CardDescription>
-                Últimas 20 movimentações registradas
-              </CardDescription>
+              <CardDescription>Últimas 20 movimentações registradas</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -306,36 +275,29 @@ const StockManagement = () => {
                   {movements.map((movement) => (
                     <TableRow key={movement.id}>
                       <TableCell>
-                        {format(new Date(movement.created_at), "dd/MM/yyyy HH:mm", {
+                        {format(new Date(movement.createdAt), "dd/MM/yyyy HH:mm", {
                           locale: ptBR,
                         })}
                       </TableCell>
-                      <TableCell className="font-medium">
-                        {movement.products.name}
-                      </TableCell>
+                      <TableCell className="font-medium">{movement.productName}</TableCell>
                       <TableCell>
                         <span
                           className={
-                            movement.movement_type === "entrada"
+                            movement.movementType === "entrada"
                               ? "text-success"
-                              : movement.movement_type === "saida"
+                              : movement.movementType === "saida"
                               ? "text-destructive"
                               : "text-warning"
                           }
                         >
-                          {movement.movement_type.charAt(0).toUpperCase() +
-                            movement.movement_type.slice(1)}
+                          {movement.movementType.charAt(0).toUpperCase() + movement.movementType.slice(1)}
                         </span>
                       </TableCell>
                       <TableCell>
-                        {movement.movement_type === "entrada" || movement.movement_type === "ajuste"
-                          ? "+"
-                          : "-"}
+                        {movement.movementType === "entrada" || movement.movementType === "ajuste" ? "+" : "-"}
                         {movement.quantity}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {movement.reason || "-"}
-                      </TableCell>
+                      <TableCell className="text-muted-foreground">{movement.reason ?? "-"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

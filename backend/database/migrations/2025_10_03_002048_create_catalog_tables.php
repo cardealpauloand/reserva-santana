@@ -49,7 +49,9 @@ return new class extends Migration
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
         });
 
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_products_name_trgm ON products USING gin (name gin_trgm_ops)');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('CREATE INDEX IF NOT EXISTS idx_products_name_trgm ON products USING gin (name gin_trgm_ops)');
+        }
 
         Schema::create('product_category', function (Blueprint $table) {
             $table->bigIncrements('id');
@@ -112,7 +114,9 @@ return new class extends Migration
             $table->index('product_id', 'idx_reviews_product');
         });
 
-        DB::statement('ALTER TABLE product_reviews ADD CONSTRAINT product_reviews_rating_check CHECK (rating BETWEEN 1 AND 5)');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE product_reviews ADD CONSTRAINT product_reviews_rating_check CHECK (rating BETWEEN 1 AND 5)');
+        }
     }
 
     /**
