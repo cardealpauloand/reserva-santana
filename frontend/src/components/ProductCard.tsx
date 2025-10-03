@@ -13,18 +13,15 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   const { addItem } = useCart();
-  const {
-    name,
-    origin,
-    type,
-    price,
-    originalPrice,
-    rating,
-  } = product;
+  const { name, origin, type, price, originalPrice, rating } = product;
 
-  const displayImage = product.image ?? product.primaryImage?.url ?? "https://placehold.co/600x800?text=Vinho";
+  const displayImage =
+    product.image ??
+    product.primaryImage?.url ??
+    "https://placehold.co/600x800?text=Vinho";
   const ratingValue = rating ?? 0;
-  const hasOriginalPrice = typeof originalPrice === "number" && originalPrice > price;
+  const hasOriginalPrice =
+    typeof originalPrice === "number" && originalPrice > price;
   const discount = hasOriginalPrice
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
     : 0;
@@ -39,7 +36,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50">
       <Link to={`/produto/${product.id}`}>
-        <div className="relative overflow-hidden aspect-[3/4] bg-muted">
+        <div className="relative overflow-hidden bg-muted h-64">
           {discount > 0 && (
             <Badge className="absolute top-3 right-3 z-10 bg-secondary text-secondary-foreground font-bold">
               -{discount}%
@@ -75,7 +72,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               <Star
                 key={i}
                 className={`h-4 w-4 ${
-                  i < ratingValue ? "fill-secondary text-secondary" : "text-muted"
+                  i < ratingValue
+                    ? "fill-secondary text-secondary"
+                    : "text-muted"
                 }`}
               />
             ))}
@@ -93,7 +92,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               R$ {originalPrice.toFixed(2)}
             </span>
           )}
-          <span className="text-2xl font-bold text-primary">R$ {price.toFixed(2)}</span>
+          <span className="text-2xl font-bold text-primary">
+            R$ {price.toFixed(2)}
+          </span>
         </div>
 
         <Button
