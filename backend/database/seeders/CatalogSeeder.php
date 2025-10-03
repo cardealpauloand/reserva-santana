@@ -53,7 +53,7 @@ class CatalogSeeder extends Seeder
                     'alcohol' => '13.5%',
                     'temperature' => '16-18°C',
                     'description' => 'Safra premiada com notas complexas de frutas vermelhas maduras, taninos sedosos e final prolongado.',
-                    'image_url' => 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&w=900&q=80',
+                    'image_url' => 'https://cdn.awsli.com.br/600x1000/2574/2574994/produto/2113151299951fc4074.jpg',
                     'categories' => ['tintos'],
                 ],
                 [
@@ -68,7 +68,7 @@ class CatalogSeeder extends Seeder
                     'alcohol' => '13%',
                     'temperature' => '10-12°C',
                     'description' => 'Vinho branco elegante com notas de frutas tropicais, boa acidez e final cremoso.',
-                    'image_url' => 'https://images.unsplash.com/photo-1506853981987-9b7e88e498c1?auto=format&fit=crop&w=900&q=80',
+                    'image_url' => 'https://cdn.awsli.com.br/600x1000/2574/2574994/produto/2113151299951fc4074.jpg',
                     'categories' => ['brancos'],
                 ],
                 [
@@ -83,7 +83,7 @@ class CatalogSeeder extends Seeder
                     'alcohol' => '12.5%',
                     'temperature' => '8-10°C',
                     'description' => 'Rosé delicado, aromas florais e frutas vermelhas frescas com equilíbrio perfeito.',
-                    'image_url' => 'https://images.unsplash.com/photo-1625602150038-94ccf8d46805?auto=format&fit=crop&w=900&q=80',
+                    'image_url' => 'https://cdn.awsli.com.br/600x1000/2574/2574994/produto/2113151299951fc4074.jpg',
                     'categories' => ['roses'],
                 ],
                 [
@@ -98,7 +98,7 @@ class CatalogSeeder extends Seeder
                     'alcohol' => '12%',
                     'temperature' => '6-8°C',
                     'description' => 'Clássico champanhe com bolhas finas, notas de brioche e fruta madura.',
-                    'image_url' => 'https://images.unsplash.com/photo-1580915411954-282cb1cfd6b0?auto=format&fit=crop&w=900&q=80',
+                    'image_url' => 'https://cdn.awsli.com.br/600x1000/2574/2574994/produto/2113151299951fc4074.jpg',
                     'categories' => ['espumantes'],
                 ],
                 [
@@ -113,7 +113,7 @@ class CatalogSeeder extends Seeder
                     'alcohol' => '14%',
                     'temperature' => '16-18°C',
                     'description' => 'Malbec encorpado com taninos macios, notas de ameixa e chocolate.',
-                    'image_url' => 'https://images.unsplash.com/photo-1609536906620-6e96d5076b31?auto=format&fit=crop&w=900&q=80',
+                    'image_url' => 'https://cdn.awsli.com.br/600x1000/2574/2574994/produto/2113151299951fc4074.jpg',
                     'categories' => ['tintos'],
                 ],
                 [
@@ -128,7 +128,7 @@ class CatalogSeeder extends Seeder
                     'alcohol' => '12.5%',
                     'temperature' => '8-10°C',
                     'description' => 'Notas cítricas e herbáceas intensas com final mineral refrescante.',
-                    'image_url' => 'https://images.unsplash.com/photo-1553856622-d1b352e9c38d?auto=format&fit=crop&w=900&q=80',
+                    'image_url' => 'https://cdn.awsli.com.br/600x1000/2574/2574994/produto/2113151299951fc4074.jpg',
                     'categories' => ['brancos'],
                 ],
                 [
@@ -143,7 +143,7 @@ class CatalogSeeder extends Seeder
                     'alcohol' => '12%',
                     'temperature' => '8-10°C',
                     'description' => 'Rosé leve e frutado com notas de morango e framboesa.',
-                    'image_url' => 'https://images.unsplash.com/photo-1622461142777-885ad2a27b7c?auto=format&fit=crop&w=900&q=80',
+                    'image_url' => 'https://cdn.awsli.com.br/600x1000/2574/2574994/produto/2113151299951fc4074.jpg',
                     'categories' => ['roses'],
                 ],
                 [
@@ -158,7 +158,7 @@ class CatalogSeeder extends Seeder
                     'alcohol' => '11.5%',
                     'temperature' => '6-8°C',
                     'description' => 'Espumante refrescante com notas de pera e flores brancas.',
-                    'image_url' => 'https://images.unsplash.com/photo-1514361892635-6e122620e235?auto=format&fit=crop&w=900&q=80',
+                    'image_url' => 'https://cdn.awsli.com.br/600x1000/2574/2574994/produto/2113151299951fc4074.jpg',
                     'categories' => ['espumantes'],
                 ],
                 [
@@ -173,7 +173,7 @@ class CatalogSeeder extends Seeder
                     'alcohol' => '14.5%',
                     'temperature' => '16-18°C',
                     'description' => 'Estrutura firme com notas de cassis, cedro e um leve toque de baunilha.',
-                    'image_url' => 'https://images.unsplash.com/photo-1515543237350-b3eea1ec8082?auto=format&fit=crop&w=900&q=80',
+                    'image_url' => 'https://cdn.awsli.com.br/600x1000/2574/2574994/produto/2113151299951fc4074.jpg',
                     'categories' => ['tintos'],
                 ],
                 [
@@ -188,7 +188,7 @@ class CatalogSeeder extends Seeder
                     'alcohol' => '12%',
                     'temperature' => '8-10°C',
                     'description' => 'Pinot Grigio fresco com notas de maçã verde e cítricos.',
-                    'image_url' => 'https://images.unsplash.com/photo-1543248939-ff40856f65d4?auto=format&fit=crop&w=900&q=80',
+                    'image_url' => 'https://cdn.awsli.com.br/600x1000/2574/2574994/produto/2113151299951fc4074.jpg',
                     'categories' => ['brancos'],
                 ],
             ];
