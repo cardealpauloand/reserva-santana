@@ -6,6 +6,9 @@ import { ProductCard } from "@/components/ProductCard";
 import { cn } from "@/lib/utils";
 import { useCategories, useCategory } from "@/hooks/useCatalog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProductFilters } from "@/components/ProductFilters";
+import { useProductFilters } from "@/hooks/useProductFilters";
+import { Button } from "@/components/ui/button";
 
 const Category = () => {
   const { category } = useParams<{ category: string }>();
@@ -37,6 +40,16 @@ const Category = () => {
     [categories]
   );
 
+  const products = categoryDetails?.products ?? [];
+  const {
+    filters,
+    filteredProducts,
+    updateFilters,
+    resetFilters,
+    areFiltersDefault,
+    bounds,
+  } = useProductFilters(products);
+
   if (!category || categoryNotFound) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -55,8 +68,6 @@ const Category = () => {
       </div>
     );
   }
-
-  const products = categoryDetails?.products ?? [];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -105,15 +116,26 @@ const Category = () => {
                 {categoryDetails?.name ?? "Carregando..."}
               </h2>
 
+              <ProductFilters
+                filters={filters}
+                bounds={bounds}
+                onFiltersChange={updateFilters}
+                onReset={resetFilters}
+                isResetDisabled={areFiltersDefault}
+                disabled={isLoadingCategory}
+              />
+
               <div className="flex items-center justify-between">
                 <p className="text-muted-foreground">
                   {isLoadingCategory
                     ? "Carregando produtos..."
-                    : `${products.length} ${
+                    : filteredProducts.length === products.length
+                    ? `${products.length} ${
                         products.length === 1
                           ? "produto encontrado"
                           : "produtos encontrados"
-                      }`}
+                      }`
+                    : `Mostrando ${filteredProducts.length} de ${products.length} produtos`}
                 </p>
               </div>
 
@@ -126,17 +148,27 @@ const Category = () => {
                     />
                   ))}
                 </div>
-              ) : products.length > 0 ? (
+              ) : filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
-                  {products.map((product) => (
+                  {filteredProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
               ) : (
                 <div className="py-16 text-center">
-                  <p className="text-muted-foreground">
-                    Nenhum produto encontrado nesta categoria.
-                  </p>
+                  <div className="space-y-3">
+                    <p className="text-muted-foreground">
+                      Nenhum produto corresponde aos filtros aplicados.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      onClick={resetFilters}
+                    >
+                      Limpar filtros
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
