@@ -6,27 +6,41 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\StockMovementResource;
 use App\Http\Resources\Admin\StockProductResource;
 use App\Models\Product;
-use App\Models\ProductStock;
 use App\Models\StockMovement;
 use App\Models\TypeMovement;
-use App\Models\Warehouse;
+use App\Services\InventoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 
 class StockController extends Controller
 {
+    public function __construct(private readonly InventoryService $inventoryService)
+    {
+    }
+
     /**
      * List products with their current stock levels.
      */
     public function products(): AnonymousResourceCollection
     {
+        $currentStockSubquery = StockMovement::query()
+            ->select('current_quantity')
+            ->whereColumn('stock_movement.product_id', 'products.id')
+            ->orderByDesc('created_at')
+            ->limit(1);
+
         $products = Product::query()
-            ->select(['id', 'name', 'type', 'price', 'stock_quantity'])
+            ->select([
+                'products.id',
+                'products.name',
+                'products.type',
+                'products.price',
+                'products.stock_quantity',
+            ])
+            ->selectSub($currentStockSubquery, 'current_stock')
             ->orderBy('name')
             ->get();
 
@@ -67,101 +81,16 @@ class StockController extends Controller
             'warehouse_id' => ['nullable', 'integer', 'exists:warehouses,id'],
         ]);
 
-        $movement = DB::transaction(function () use ($validated) {
-            $product = Product::query()->lockForUpdate()->findOrFail($validated['product_id']);
-            $warehouse = $this->resolveWarehouse($validated['warehouse_id'] ?? null);
-            $typeMovement = $this->resolveMovementType($validated['movement_type']);
-
-            $quantity = (int) $validated['quantity'];
-            $direction = $typeMovement->name === TypeMovement::SAIDA ? -1 : 1;
-
-            $productStock = ProductStock::query()
-                ->where('product_id', $product->id)
-                ->where('warehouse_id', $warehouse->id)
-                ->lockForUpdate()
-                ->first();
-
-            if (! $productStock) {
-                $productStock = new ProductStock();
-                $productStock->product_id = $product->id;
-                $productStock->warehouse_id = $warehouse->id;
-                $productStock->quantity_on_hand = 0;
-                $productStock->quantity_reserved = 0;
-                $productStock->min_level = 0;
-            }
-
-            if ($direction < 0) {
-                if ($productStock->quantity_on_hand < $quantity) {
-                    throw ValidationException::withMessages([
-                        'quantity' => 'Quantidade indisponível em estoque para o armazém selecionado.',
-                    ]);
-                }
-
-                if ($product->stock_quantity < $quantity) {
-                    throw ValidationException::withMessages([
-                        'quantity' => 'Quantidade indisponível em estoque.',
-                    ]);
-                }
-            }
-
-            $productStock->quantity_on_hand += $direction * $quantity;
-
-            if ($productStock->quantity_on_hand < 0) {
-                throw ValidationException::withMessages([
-                    'quantity' => 'O movimento deixaria a quantidade em estoque negativa.',
-                ]);
-            }
-
-            $productStock->updated_at = now();
-            $productStock->save();
-
-            $product->stock_quantity += $direction * $quantity;
-
-            if ($product->stock_quantity < 0) {
-                throw ValidationException::withMessages([
-                    'quantity' => 'O movimento deixaria a quantidade total em estoque negativa.',
-                ]);
-            }
-
-            $product->save();
-
-            $movement = StockMovement::create([
-                'product_id' => $product->id,
-                'warehouse_id' => $warehouse->id,
-                'type_movement_id' => $typeMovement->id,
-                'quantity' => $quantity,
-                'reason' => $validated['reason'] ?? null,
-                'current_quantity' => $product->stock_quantity,
-            ]);
-
-            return $movement->load(['product:id,name', 'typeMovement:id,name']);
-        });
+        $movement = $this->inventoryService->registerProductMovement(
+            $validated['product_id'],
+            (int) $validated['quantity'],
+            $validated['movement_type'],
+            $validated['reason'] ?? null,
+            $validated['warehouse_id'] ?? null,
+        );
 
         return StockMovementResource::make($movement)
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
-    }
-
-    /**
-     * Resolve the movement type from the provided identifier.
-     */
-    private function resolveMovementType(string $movementType): TypeMovement
-    {
-        return TypeMovement::query()->firstOrCreate(['name' => $movementType]);
-    }
-
-    /**
-     * Resolve the warehouse or fallback to the default one.
-     */
-    private function resolveWarehouse(?int $warehouseId): Warehouse
-    {
-        if ($warehouseId) {
-            return Warehouse::query()->findOrFail($warehouseId);
-        }
-
-        return Warehouse::query()->firstOrCreate(
-            ['code' => 'LOJA-PRINCIPAL'],
-            ['name' => 'Loja Principal']
-        );
     }
 }

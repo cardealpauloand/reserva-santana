@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\ProductResource;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Models\StockMovement;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -19,7 +20,15 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
+        $currentStockSubquery = StockMovement::query()
+            ->select('current_quantity')
+            ->whereColumn('stock_movement.product_id', 'products.id')
+            ->orderByDesc('created_at')
+            ->limit(1);
+
         $products = Product::query()
+            ->select(['products.*'])
+            ->selectSub($currentStockSubquery, 'current_stock')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = Str::lower($request->string('search')->trim());
 
@@ -67,7 +76,7 @@ class ProductController extends Controller
             'alcohol' => $validated['alcohol'] ?? null,
             'temperature' => $validated['temperature'] ?? null,
             'description' => $validated['description'] ?? null,
-            'stock_quantity' => $validated['stock_quantity'] ?? 0,
+            'stock_quantity' => 0,
             'active' => $validated['active'] ?? true,
         ]);
 
@@ -106,7 +115,6 @@ class ProductController extends Controller
             'alcohol' => $validated['alcohol'] ?? null,
             'temperature' => $validated['temperature'] ?? null,
             'description' => $validated['description'] ?? null,
-            'stock_quantity' => $validated['stock_quantity'] ?? 0,
             'active' => $validated['active'] ?? $product->active,
         ]);
 
@@ -152,7 +160,6 @@ class ProductController extends Controller
             'alcohol' => ['nullable', 'string', 'max:50'],
             'temperature' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string'],
-            'stock_quantity' => ['nullable', 'integer', 'min:0'],
             'active' => ['sometimes', 'boolean'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => ['integer', 'exists:categories,id'],

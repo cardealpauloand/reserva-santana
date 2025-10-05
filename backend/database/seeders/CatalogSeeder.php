@@ -6,6 +6,8 @@ use App\Models\Category;
 use App\Models\Group;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Models\TypeMovement;
+use App\Services\InventoryService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -17,7 +19,9 @@ class CatalogSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::transaction(function (): void {
+        $inventoryService = app(InventoryService::class);
+
+        DB::transaction(function () use ($inventoryService): void {
             $this->resetTables();
 
             $group = Group::create([
@@ -206,7 +210,6 @@ class CatalogSeeder extends Seeder
                     'alcohol' => $productData['alcohol'] ?? null,
                     'temperature' => $productData['temperature'] ?? null,
                     'description' => $productData['description'] ?? null,
-                    'stock_quantity' => $productData['stock_quantity'] ?? random_int(25, 150),
                     'active' => true,
                 ]);
 
@@ -224,6 +227,17 @@ class CatalogSeeder extends Seeder
                     'position' => 1,
                     'is_primary' => true,
                 ]);
+
+                $initialStock = $productData['stock_quantity'] ?? $productData['initial_stock'] ?? random_int(25, 150);
+
+                if ($initialStock > 0) {
+                    $inventoryService->registerProductMovement(
+                        $product->id,
+                        (int) $initialStock,
+                        TypeMovement::ENTRADA,
+                        'Estoque inicial automático',
+                    );
+                }
             }
         });
     }
@@ -234,6 +248,8 @@ class CatalogSeeder extends Seeder
     private function resetTables(): void
     {
         $tables = [
+            'stock_movement',
+            'product_stock',
             'product_images',
             'product_category',
             'product_variants',

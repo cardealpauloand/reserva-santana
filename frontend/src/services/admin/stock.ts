@@ -14,6 +14,7 @@ type ApiStockProduct = {
   type: string | null;
   price: number | null;
   stock_quantity: number;
+  current_stock?: number | null;
 };
 
 type ApiStockMovement = {
@@ -57,12 +58,14 @@ export type CreateStockMovementPayload = {
 };
 
 function mapProduct(apiProduct: ApiStockProduct): StockProduct {
+  const stock = apiProduct.current_stock ?? apiProduct.stock_quantity ?? 0;
+
   return {
     id: apiProduct.id,
     name: apiProduct.name,
     type: apiProduct.type,
     price: Number(apiProduct.price ?? 0),
-    stockQuantity: Number(apiProduct.stock_quantity ?? 0),
+    stockQuantity: Number(stock),
   } satisfies StockProduct;
 }
 

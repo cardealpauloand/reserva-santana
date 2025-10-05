@@ -50,6 +50,7 @@ type ApiProduct = {
   alcohol?: string | null;
   temperature?: string | null;
   description?: string | null;
+  stock_quantity?: number | null;
   image?: string | null;
   primary_image?: ApiProductImage | null;
   images?: ApiProductImage[] | null;
@@ -116,6 +117,7 @@ function mapProduct(apiProduct: ApiProduct): Product {
     alcohol: apiProduct.alcohol ?? null,
     temperature: apiProduct.temperature ?? null,
     description: apiProduct.description ?? null,
+    stockQuantity: apiProduct.stock_quantity ?? 0,
     image: apiProduct.image ?? primaryImage?.url ?? null,
     primaryImage: primaryImage ?? null,
     images,

@@ -27,6 +27,9 @@ class ProductResource extends JsonResource
             'alcohol' => $this->alcohol,
             'temperature' => $this->temperature,
             'description' => $this->description,
+            'stock_quantity' => $this->stock_quantity !== null
+                ? (int) $this->stock_quantity
+                : 0,
             'image' => $this->primaryImage?->url,
             'primary_image' => $this->when($this->primaryImage, [
                 'id' => $this->primaryImage?->id,

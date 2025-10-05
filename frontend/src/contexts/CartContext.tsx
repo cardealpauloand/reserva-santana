@@ -23,14 +23,29 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const addItem = (product: Product) => {
     setItems((prev) => {
       const existing = prev.find((item) => item.id === product.id);
+      const stock = product.stockQuantity;
+
       if (existing) {
+        if (existing.quantity >= stock) {
+          return prev;
+        }
+
         return prev.map((item) =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? {
+                ...item,
+                stockQuantity: stock,
+                quantity: Math.min(stock, item.quantity + 1),
+              }
             : item
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+
+      if (stock <= 0) {
+        return prev;
+      }
+
+      return [...prev, { ...product, stockQuantity: stock, quantity: 1 }];
     });
   };
 
@@ -39,15 +54,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateQuantity = (productId: number, quantity: number) => {
-    if (quantity <= 0) {
-      removeItem(productId);
-      return;
-    }
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
-      )
-    );
+    setItems((prev) => {
+      const target = prev.find((item) => item.id === productId);
+
+      if (!target) {
+        return prev;
+      }
+
+      const normalizedQuantity = Math.max(0, Math.min(quantity, target.stockQuantity));
+
+      if (normalizedQuantity === 0) {
+        return prev.filter((item) => item.id !== productId);
+      }
+
+      return prev.map((item) =>
+        item.id === productId ? { ...item, quantity: normalizedQuantity } : item
+      );
+    });
   };
 
   const clearCart = () => {

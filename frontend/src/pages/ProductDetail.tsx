@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
 import { ProductCard } from "@/components/ProductCard";
 import { Star, Plus, Minus, ArrowLeft, Wine, Thermometer, Percent } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProduct, useProducts } from "@/hooks/useCatalog";
@@ -15,7 +15,7 @@ const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const productId = Number(id);
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
 
@@ -27,6 +27,18 @@ const ProductDetail = () => {
   } = useProduct(Number.isFinite(productId) ? productId : undefined);
 
   const { data: allProducts } = useProducts();
+
+  const cartQuantity = useMemo(() => {
+    if (!product) {
+      return 0;
+    }
+
+    const cartItem = items.find((item) => item.id === product.id);
+    return cartItem?.quantity ?? 0;
+  }, [items, product]);
+
+  const availableToAdd = product ? Math.max(0, product.stockQuantity - cartQuantity) : 0;
+  const isOutOfStock = availableToAdd === 0;
 
   const suggestedProducts = useMemo(() => {
     if (!product || !allProducts) return [];
@@ -42,8 +54,53 @@ const ProductDetail = () => {
       .slice(0, 4);
   }, [product, allProducts]);
 
+  useEffect(() => {
+    if (!product) {
+      return;
+    }
+
+    setQuantity((current) => {
+      if (availableToAdd === 0) {
+        return 0;
+      }
+
+      if (current <= 0) {
+        return 1;
+      }
+
+      return Math.min(current, availableToAdd);
+    });
+  }, [availableToAdd, product]);
+
   const handleAddToCart = () => {
     if (!product) return;
+
+    if (isOutOfStock) {
+      toast({
+        title: "Produto indisponível",
+        description: "Este produto está sem estoque no momento.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (quantity <= 0) {
+      toast({
+        title: "Quantidade inválida",
+        description: "Selecione ao menos uma unidade para adicionar ao carrinho.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (quantity > availableToAdd) {
+      toast({
+        title: "Estoque insuficiente",
+        description: `Você pode adicionar no máximo ${availableToAdd} ${availableToAdd === 1 ? "unidade" : "unidades"} deste produto.`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     for (let i = 0; i < quantity; i++) {
       addItem(product);
@@ -54,8 +111,23 @@ const ProductDetail = () => {
     });
   };
 
-  const incrementQuantity = () => setQuantity((q) => q + 1);
-  const decrementQuantity = () => setQuantity((q) => Math.max(1, q - 1));
+  const incrementQuantity = () => {
+    if (isOutOfStock) {
+      return;
+    }
+
+    setQuantity((q) => Math.min(availableToAdd, q + 1));
+  };
+
+  const decrementQuantity = () => {
+    setQuantity((q) => {
+      if (q <= 1) {
+        return isOutOfStock ? 0 : 1;
+      }
+
+      return q - 1;
+    });
+  };
 
   if (!Number.isFinite(productId) || (isError && error.message.toLowerCase().includes("not"))) {
     return (
@@ -119,6 +191,28 @@ const ProductDetail = () => {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
   const ratingValue = product.rating ?? 0;
+  const stockLabel = `${product.stockQuantity} ${product.stockQuantity === 1 ? "unidade" : "unidades"} em estoque`;
+  const alreadyInCartLabel = cartQuantity > 0
+    ? ` • ${cartQuantity} ${cartQuantity === 1 ? "unidade" : "unidades"} no carrinho`
+    : "";
+  const availableLabel = isOutOfStock
+    ? "Produto indisponível no momento"
+    : `${availableToAdd} ${availableToAdd === 1 ? "unidade" : "unidades"} disponíveis para adicionar`;
+  const stockInfoMessage = (() => {
+    if (product.stockQuantity === 0) {
+      return "Sem estoque disponível";
+    }
+
+    if (availableToAdd === 0 && cartQuantity > 0) {
+      return `Todas as ${product.stockQuantity} ${product.stockQuantity === 1 ? "unidade" : "unidades"} já estão no carrinho`;
+    }
+
+    return `${stockLabel}${alreadyInCartLabel}`;
+  })();
+  const stockInfoClass =
+    product.stockQuantity === 0 || (availableToAdd === 0 && cartQuantity > 0)
+      ? "text-destructive"
+      : "text-muted-foreground";
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -194,6 +288,9 @@ const ProductDetail = () => {
                     </span>
                   )}
                 </div>
+                <p className={`text-sm ${stockInfoClass}`}>
+                  {stockInfoMessage}
+                </p>
                 {discount > 0 && (
                   <Badge variant="destructive" className="gap-1">
                     <Percent className="h-3 w-3" />
@@ -235,7 +332,7 @@ const ProductDetail = () => {
                     variant="outline"
                     size="icon"
                     onClick={decrementQuantity}
-                    disabled={quantity <= 1}
+                    disabled={isOutOfStock || quantity <= 1}
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
@@ -246,10 +343,12 @@ const ProductDetail = () => {
                     variant="outline"
                     size="icon"
                     onClick={incrementQuantity}
+                    disabled={isOutOfStock || quantity >= availableToAdd}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
+                <p className="text-xs text-muted-foreground">{availableLabel}</p>
               </div>
 
               <div className="space-y-3">
@@ -257,8 +356,11 @@ const ProductDetail = () => {
                   onClick={handleAddToCart}
                   size="lg"
                   className="w-full text-lg"
+                  disabled={isOutOfStock || quantity <= 0}
                 >
-                  Adicionar ao Carrinho - R$ {(product.price * quantity).toFixed(2)}
+                  {isOutOfStock
+                    ? "Sem estoque"
+                    : `Adicionar ao Carrinho - R$ ${(product.price * quantity).toFixed(2)}`}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">
                   Entrega em até 5 dias úteis

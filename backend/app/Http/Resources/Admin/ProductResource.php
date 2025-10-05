@@ -15,6 +15,12 @@ class ProductResource extends JsonResource
     public function toArray(Request $request): array
     {
         $primaryImage = $this->primaryImage;
+        $currentStock = $this->resource->getAttribute('current_stock');
+
+        if ($currentStock === null) {
+            $currentStock = $this->stock_quantity;
+        }
+        $normalizedStock = $currentStock !== null ? (int) $currentStock : 0;
 
         return [
             'id' => $this->id,
@@ -29,7 +35,8 @@ class ProductResource extends JsonResource
             'alcohol' => $this->alcohol,
             'temperature' => $this->temperature,
             'description' => $this->description,
-            'stock_quantity' => $this->stock_quantity !== null ? (int) $this->stock_quantity : 0,
+            'stock_quantity' => $normalizedStock,
+            'current_stock' => $normalizedStock,
             'active' => (bool) $this->active,
             'image' => $primaryImage?->url,
             'primary_image' => $primaryImage ? [

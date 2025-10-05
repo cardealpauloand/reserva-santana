@@ -26,6 +26,7 @@ export interface Product {
   alcohol?: string | null;
   temperature?: string | null;
   description?: string | null;
+  stockQuantity: number;
   image?: string | null;
   primaryImage?: ProductImage | null;
   images?: ProductImage[];

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Product;
+use App\Services\InventoryService;
 use Database\Seeders\InventorySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -24,8 +25,13 @@ class StockControllerTest extends TestCase
             'name' => 'Vinho Reserva',
             'slug' => 'vinho-reserva-' . uniqid(),
             'price' => 99.90,
-            'stock_quantity' => 10,
         ]);
+
+        app(InventoryService::class)->registerProductMovement(
+            $product->id,
+            10,
+            'entrada',
+        );
 
         $response = $this->getJson('/api/admin/stock/products');
 
@@ -34,6 +40,7 @@ class StockControllerTest extends TestCase
                 'id' => $product->id,
                 'name' => 'Vinho Reserva',
                 'stock_quantity' => 10,
+                'current_stock' => 10,
             ]);
     }
 
@@ -43,8 +50,13 @@ class StockControllerTest extends TestCase
             'name' => 'Vinho Entrada',
             'slug' => 'vinho-entrada-' . uniqid(),
             'price' => 79.90,
-            'stock_quantity' => 5,
         ]);
+
+        app(InventoryService::class)->registerProductMovement(
+            $product->id,
+            5,
+            'entrada',
+        );
 
         $response = $this->postJson('/api/admin/stock/movements', [
             'product_id' => $product->id,
@@ -75,8 +87,13 @@ class StockControllerTest extends TestCase
             'name' => 'Vinho Saída',
             'slug' => 'vinho-saida-' . uniqid(),
             'price' => 59.90,
-            'stock_quantity' => 2,
         ]);
+
+        app(InventoryService::class)->registerProductMovement(
+            $product->id,
+            2,
+            'entrada',
+        );
 
         $response = $this->postJson('/api/admin/stock/movements', [
             'product_id' => $product->id,

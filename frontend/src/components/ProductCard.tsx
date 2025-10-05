@@ -6,13 +6,14 @@ import { toast } from "sonner";
 import type { Product } from "@/types/product";
 import { useCart } from "@/contexts/CartContext";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
   const { name, origin, type, price, originalPrice, rating } = product;
 
   const displayImage =
@@ -26,20 +27,65 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
     : 0;
 
+  const cartQuantity = items.find((item) => item.id === product.id)?.quantity ?? 0;
+  const availableToAdd = Math.max(0, product.stockQuantity - cartQuantity);
+  const isOutOfStock = product.stockQuantity <= 0;
+  const hasReachedCartLimit = !isOutOfStock && availableToAdd === 0;
+  const disableAddButton = isOutOfStock || hasReachedCartLimit;
+
   const handleAddToCart = () => {
+    if (isOutOfStock) {
+      toast.error("Produto indisponível", {
+        description: "Sem unidades disponíveis em estoque.",
+      });
+      return;
+    }
+
+    if (hasReachedCartLimit) {
+      toast.warning("Limite atingido", {
+        description: "Você já adicionou todas as unidades disponíveis.",
+      });
+      return;
+    }
+
     addItem(product);
     toast.success("Produto adicionado ao carrinho!", {
       description: `${name} foi adicionado com sucesso.`,
     });
   };
 
+  const availabilityLabel = (() => {
+    if (isOutOfStock) {
+      return "Sem estoque";
+    }
+
+    if (hasReachedCartLimit) {
+      return "Limite no carrinho";
+    }
+
+    return `${product.stockQuantity} ${product.stockQuantity === 1 ? "unidade" : "unidades"}`;
+  })();
+
   return (
-    <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50">
+    <Card
+      className={cn(
+        "group overflow-hidden transition-all duration-300 border-border/50 hover:shadow-lg",
+        isOutOfStock && "opacity-70 grayscale"
+      )}
+    >
       <Link to={`/produto/${product.id}`}>
         <div className="relative overflow-hidden bg-muted h-64">
           {discount > 0 && (
             <Badge className="absolute top-3 right-3 z-10 bg-secondary text-secondary-foreground font-bold">
               -{discount}%
+            </Badge>
+          )}
+          {isOutOfStock && (
+            <Badge
+              variant="secondary"
+              className="absolute top-3 left-3 z-10 bg-muted text-muted-foreground"
+            >
+              Sem estoque
             </Badge>
           )}
           <img
@@ -95,6 +141,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           <span className="text-2xl font-bold text-primary">
             R$ {price.toFixed(2)}
           </span>
+          <span
+            className={cn(
+              "text-xs",
+              isOutOfStock ? "text-destructive" : "text-muted-foreground"
+            )}
+          >
+            {availabilityLabel}
+          </span>
         </div>
 
         <Button
@@ -102,6 +156,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           variant="default"
           onClick={handleAddToCart}
           className="h-10 w-10"
+          disabled={disableAddButton}
         >
           <ShoppingCart className="h-4 w-4" />
         </Button>

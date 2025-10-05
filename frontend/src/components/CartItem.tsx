@@ -10,6 +10,10 @@ interface CartItemProps {
 export const CartItem = ({ item }: CartItemProps) => {
   const { updateQuantity, removeItem } = useCart();
   const originLabel = item.origin ?? "Origem não informada";
+  const isMaxQuantity = item.quantity >= item.stockQuantity;
+  const stockInfo = item.stockQuantity === 0
+    ? "Sem estoque"
+    : `${item.stockQuantity} ${item.stockQuantity === 1 ? "unidade" : "unidades"} disponíveis`;
 
   return (
     <div className="flex gap-4 py-4 border-b border-border">
@@ -38,10 +42,16 @@ export const CartItem = ({ item }: CartItemProps) => {
             size="icon"
             className="h-8 w-8"
             onClick={() => updateQuantity(item.id, item.quantity + 1)}
+            disabled={isMaxQuantity}
           >
             <Plus className="h-4 w-4" />
           </Button>
         </div>
+        <p className={`text-xs ${item.stockQuantity === 0 ? "text-destructive" : "text-muted-foreground"}`}>
+          {isMaxQuantity && item.stockQuantity > 0
+            ? "Quantidade máxima atingida"
+            : stockInfo}
+        </p>
       </div>
       <div className="flex flex-col items-end justify-between">
         <Button

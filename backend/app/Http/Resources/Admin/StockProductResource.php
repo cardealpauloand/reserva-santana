@@ -14,12 +14,20 @@ class StockProductResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $currentStock = $this->resource->getAttribute('current_stock');
+
+        if ($currentStock === null) {
+            $currentStock = $this->stock_quantity;
+        }
+        $normalizedStock = $currentStock !== null ? (int) $currentStock : 0;
+
         return [
             'id' => (int) $this->id,
             'name' => $this->name,
             'type' => $this->type,
             'price' => $this->price !== null ? (float) $this->price : null,
-            'stock_quantity' => $this->stock_quantity !== null ? (int) $this->stock_quantity : 0,
+            'stock_quantity' => $normalizedStock,
+            'current_stock' => $normalizedStock,
         ];
     }
 }

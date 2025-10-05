@@ -52,7 +52,6 @@ interface FormState {
   origin: string;
   type: string;
   price: string;
-  stockQuantity: string;
   rating: string;
   imageUrl: string;
   description: string;
@@ -75,7 +74,6 @@ const createInitialFormState = (): FormState => ({
   origin: "",
   type: DEFAULT_PRODUCT_TYPE,
   price: "",
-  stockQuantity: "",
   rating: "",
   imageUrl: "",
   description: "",
@@ -137,7 +135,6 @@ const ProductManagement = () => {
         origin: product.origin ?? "",
         type: normalizedType,
         price: product.price.toString(),
-        stockQuantity: product.stockQuantity.toString(),
         rating: product.rating !== null ? product.rating.toString() : "",
         imageUrl: product.imageUrl ?? "",
         description: product.description ?? "",
@@ -180,19 +177,6 @@ const ProductManagement = () => {
       return;
     }
 
-    const stockValue = formData.stockQuantity.trim()
-      ? Number(formData.stockQuantity)
-      : 0;
-
-    if (Number.isNaN(stockValue) || stockValue < 0) {
-      toast({
-        title: "Estoque inválido",
-        description: "Informe uma quantidade de estoque válida",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const ratingValue = formData.rating.trim()
       ? Number(formData.rating)
       : null;
@@ -211,7 +195,6 @@ const ProductManagement = () => {
       origin: formData.origin.trim() || null,
       type: formData.type || null,
       price: priceValue,
-      stock_quantity: stockValue,
       rating: ratingValue,
       description: formData.description.trim() || null,
       image_url: formData.imageUrl.trim() || null,
@@ -434,7 +417,7 @@ const ProductManagement = () => {
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="price">Preço *</Label>
                 <Input
@@ -450,16 +433,16 @@ const ProductManagement = () => {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="stock">Estoque</Label>
+                <Label htmlFor="stock">Estoque atual</Label>
                 <Input
                   id="stock"
-                  type="number"
-                  min="0"
-                  value={formData.stockQuantity}
-                  onChange={(event) =>
-                    setFormData({ ...formData, stockQuantity: event.target.value })
-                  }
+                  value={(editingProduct?.stockQuantity ?? 0).toString()}
+                  readOnly
+                  disabled
                 />
+                <p className="text-xs text-muted-foreground">
+                  Atualize o estoque pela tela de movimentações.
+                </p>
               </div>
             </div>
 

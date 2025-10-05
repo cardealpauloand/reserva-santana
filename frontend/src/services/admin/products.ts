@@ -29,6 +29,7 @@ type ApiProduct = {
   temperature: string | null;
   description: string | null;
   stock_quantity: number | null;
+  current_stock?: number | null;
   active: boolean;
   image: string | null;
   categories?: ApiCategorySummary[] | null;
@@ -65,13 +66,14 @@ export type AdminProductPayload = {
   alcohol?: string | null;
   temperature?: string | null;
   description?: string | null;
-  stock_quantity?: number | null;
   active?: boolean;
   category_ids?: number[];
   image_url?: string | null;
 };
 
 function mapProduct(apiProduct: ApiProduct): AdminProduct {
+  const stock = apiProduct.current_stock ?? apiProduct.stock_quantity ?? 0;
+
   return {
     id: apiProduct.id,
     slug: apiProduct.slug,
@@ -85,7 +87,7 @@ function mapProduct(apiProduct: ApiProduct): AdminProduct {
     alcohol: apiProduct.alcohol,
     temperature: apiProduct.temperature,
     description: apiProduct.description,
-    stockQuantity: Number(apiProduct.stock_quantity ?? 0),
+    stockQuantity: Number(stock),
     active: apiProduct.active,
     imageUrl: apiProduct.image,
     categories: apiProduct.categories ?? [],
