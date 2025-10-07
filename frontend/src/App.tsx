@@ -18,6 +18,7 @@ import Dashboard from "./pages/Dashboard";
 import StockManagement from "./pages/StockManagement";
 import ProductManagement from "./pages/ProductManagement";
 import Orders from "./pages/Orders";
+import AdminOrders from "./pages/AdminOrders";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,29 +41,37 @@ const App = () => (
               <Route path="/busca" element={<Search />} />
               <Route path="/produto/:id" element={<ProductDetail />} />
               <Route path="/auth" element={<Auth />} />
-              <Route 
-                path="/dashboard" 
+              <Route
+                path="/dashboard"
                 element={
                   <ProtectedRoute requireAdmin>
                     <Dashboard />
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/estoque" 
+              <Route
+                path="/admin/pedidos"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminOrders />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/estoque"
                 element={
                   <ProtectedRoute requireAdmin>
                     <StockManagement />
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/produtos" 
+              <Route
+                path="/produtos"
                 element={
                   <ProtectedRoute requireAdmin>
                     <ProductManagement />
                   </ProtectedRoute>
-                } 
+                }
               />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

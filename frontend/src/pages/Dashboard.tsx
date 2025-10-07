@@ -240,7 +240,7 @@ const Dashboard = () => {
 
             <Card
               className="hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => navigate("/pedidos")}
+              onClick={() => navigate("/admin/pedidos")}
             >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
