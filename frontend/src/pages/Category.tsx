@@ -6,7 +6,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { cn } from "@/lib/utils";
 import { useCategories, useCategory } from "@/hooks/useCatalog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ProductFilters } from "@/components/ProductFilters";
+import { ProductFiltersLauncher } from "@/components/ProductFiltersLauncher";
 import { useProductFilters } from "@/hooks/useProductFilters";
 import { Button } from "@/components/ui/button";
 
@@ -48,7 +48,23 @@ const Category = () => {
     resetFilters,
     areFiltersDefault,
     bounds,
+    activeFiltersCount,
   } = useProductFilters(products);
+
+  const resultsSummary = useMemo(() => {
+    if (isLoadingCategory) {
+      return "Carregando produtos...";
+    }
+
+    if (filteredProducts.length === products.length) {
+      const count = products.length;
+      return `${count} ${
+        count === 1 ? "produto encontrado" : "produtos encontrados"
+      }`;
+    }
+
+    return `Mostrando ${filteredProducts.length} de ${products.length} produtos`;
+  }, [isLoadingCategory, filteredProducts.length, products.length]);
 
   if (!category || categoryNotFound) {
     return (
@@ -116,26 +132,22 @@ const Category = () => {
                 {categoryDetails?.name ?? "Carregando..."}
               </h2>
 
-              <ProductFilters
-                filters={filters}
-                bounds={bounds}
-                onFiltersChange={updateFilters}
-                onReset={resetFilters}
-                isResetDisabled={areFiltersDefault}
-                disabled={isLoadingCategory}
-              />
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <ProductFiltersLauncher
+                  filters={filters}
+                  bounds={bounds}
+                  onFiltersChange={updateFilters}
+                  onReset={resetFilters}
+                  isResetDisabled={areFiltersDefault}
+                  disabled={isLoadingCategory}
+                  areFiltersDefault={areFiltersDefault}
+                  activeFiltersCount={activeFiltersCount}
+                  title={`Filtros de ${categoryDetails?.name ?? "categoria"}`}
+                  description="Refine os produtos por ordenação, preço e disponibilidade."
+                />
 
-              <div className="flex items-center justify-between">
-                <p className="text-muted-foreground">
-                  {isLoadingCategory
-                    ? "Carregando produtos..."
-                    : filteredProducts.length === products.length
-                    ? `${products.length} ${
-                        products.length === 1
-                          ? "produto encontrado"
-                          : "produtos encontrados"
-                      }`
-                    : `Mostrando ${filteredProducts.length} de ${products.length} produtos`}
+                <p className="text-sm text-muted-foreground sm:text-right">
+                  {resultsSummary}
                 </p>
               </div>
 

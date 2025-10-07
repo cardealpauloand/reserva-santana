@@ -1,6 +1,12 @@
 import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -24,6 +30,7 @@ export interface ProductFiltersProps {
   onReset: () => void;
   isResetDisabled?: boolean;
   disabled?: boolean;
+  showResetButton?: boolean;
   className?: string;
 }
 
@@ -34,6 +41,7 @@ export const ProductFilters = ({
   onReset,
   isResetDisabled = false,
   disabled = false,
+  showResetButton = true,
   className,
 }: ProductFiltersProps) => {
   const isSliderDisabled = bounds.max <= bounds.min;
@@ -52,7 +60,9 @@ export const ProductFilters = ({
       return;
     }
     const [min, max] = value;
-    onFiltersChange({ priceRange: [min, max] as ProductFiltersState["priceRange"] });
+    onFiltersChange({
+      priceRange: [min, max] as ProductFiltersState["priceRange"],
+    });
   };
 
   return (
@@ -72,7 +82,9 @@ export const ProductFilters = ({
             <Select
               value={filters.sortBy}
               onValueChange={(value) =>
-                onFiltersChange({ sortBy: value as ProductFiltersState["sortBy"] })
+                onFiltersChange({
+                  sortBy: value as ProductFiltersState["sortBy"],
+                })
               }
               disabled={disabled}
             >
@@ -88,13 +100,17 @@ export const ProductFilters = ({
             </Select>
           </div>
 
-          <Separator orientation="vertical" className="hidden h-auto self-stretch md:block" />
+          <Separator
+            orientation="vertical"
+            className="hidden h-auto self-stretch md:block"
+          />
 
           <div className="flex min-w-[200px] flex-1 flex-col gap-2">
             <div className="flex items-center justify-between text-xs font-medium uppercase text-muted-foreground">
               <span>Faixa de preço</span>
               <span>
-                {formatCurrency(filters.priceRange[0])} - {formatCurrency(filters.priceRange[1])}
+                {formatCurrency(filters.priceRange[0])} -{" "}
+                {formatCurrency(filters.priceRange[1])}
               </span>
             </div>
             <Slider
@@ -107,7 +123,10 @@ export const ProductFilters = ({
             />
           </div>
 
-          <Separator orientation="vertical" className="hidden h-auto self-stretch md:block" />
+          <Separator
+            orientation="vertical"
+            className="hidden h-auto self-stretch md:block"
+          />
 
           <div className="flex min-w-[180px] items-center justify-between rounded-md border border-border/50 px-3 py-2">
             <div>
@@ -130,14 +149,16 @@ export const ProductFilters = ({
           </div>
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onReset}
-          disabled={disabled || isResetDisabled}
-        >
-          Limpar filtros
-        </Button>
+        {showResetButton && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onReset}
+            disabled={disabled || isResetDisabled}
+          >
+            Limpar filtros
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

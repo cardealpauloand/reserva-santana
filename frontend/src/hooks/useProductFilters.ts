@@ -95,6 +95,30 @@ export function applyProductFilters(
   return filtered;
 }
 
+export function countActiveProductFilters(
+  filters: ProductFiltersState,
+  defaults: ProductFiltersState
+): number {
+  let count = 0;
+
+  if (filters.availability !== defaults.availability) {
+    count += 1;
+  }
+
+  if (filters.sortBy !== defaults.sortBy) {
+    count += 1;
+  }
+
+  if (
+    filters.priceRange[0] !== defaults.priceRange[0] ||
+    filters.priceRange[1] !== defaults.priceRange[1]
+  ) {
+    count += 1;
+  }
+
+  return count;
+}
+
 export function useProductFilters(products: Product[]) {
   const defaultFilters = useMemo(
     () => createDefaultProductFilters(products),
@@ -109,18 +133,15 @@ export function useProductFilters(products: Product[]) {
     setFilters(cloneFilterState(defaultFilters));
   }, [defaultFilters]);
 
-  const updateFilters = useCallback(
-    (changes: Partial<ProductFiltersState>) => {
-      setFilters((prev) => ({
-        availability: changes.availability ?? prev.availability,
-        sortBy: changes.sortBy ?? prev.sortBy,
-        priceRange: changes.priceRange
-          ? [changes.priceRange[0], changes.priceRange[1]]
-          : [prev.priceRange[0], prev.priceRange[1]],
-      }));
-    },
-    []
-  );
+  const updateFilters = useCallback((changes: Partial<ProductFiltersState>) => {
+    setFilters((prev) => ({
+      availability: changes.availability ?? prev.availability,
+      sortBy: changes.sortBy ?? prev.sortBy,
+      priceRange: changes.priceRange
+        ? [changes.priceRange[0], changes.priceRange[1]]
+        : [prev.priceRange[0], prev.priceRange[1]],
+    }));
+  }, []);
 
   const filteredProducts = useMemo(
     () => applyProductFilters(products, filters),
@@ -138,6 +159,11 @@ export function useProductFilters(products: Product[]) {
 
   const bounds = useMemo(() => getPriceBounds(products), [products]);
 
+  const activeFiltersCount = useMemo(
+    () => countActiveProductFilters(filters, defaultFilters),
+    [filters, defaultFilters]
+  );
+
   return {
     filters,
     filteredProducts,
@@ -145,5 +171,6 @@ export function useProductFilters(products: Product[]) {
     resetFilters,
     areFiltersDefault,
     bounds,
+    activeFiltersCount,
   } as const;
 }

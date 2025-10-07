@@ -6,7 +6,7 @@ import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchProducts } from "@/services/catalog";
-import { ProductFilters } from "@/components/ProductFilters";
+import { ProductFiltersLauncher } from "@/components/ProductFiltersLauncher";
 import { useProductFilters } from "@/hooks/useProductFilters";
 import { Button } from "@/components/ui/button";
 import { useCategories } from "@/hooks/useCatalog";
@@ -19,10 +19,7 @@ const Search = () => {
 
   const { data: categories, isLoading: isLoadingCategories } = useCategories();
 
-  const {
-    data: products,
-    isLoading,
-  } = useQuery({
+  const { data: products, isLoading } = useQuery({
     queryKey: ["catalog", "search", query],
     queryFn: () => fetchProducts({ search: query }),
     enabled: shouldSearch,
@@ -57,11 +54,27 @@ const Search = () => {
     resetFilters,
     areFiltersDefault,
     bounds,
+    activeFiltersCount,
   } = useProductFilters(searchResults);
 
   const productsTitle = shouldSearch
     ? `Resultados para "${query}"`
     : "Buscar produtos";
+
+  const resultsSummary = useMemo(() => {
+    if (isLoading) {
+      return "Carregando produtos...";
+    }
+
+    if (filteredProducts.length === searchResults.length) {
+      const count = searchResults.length;
+      return `${count} ${
+        count === 1 ? "produto encontrado" : "produtos encontrados"
+      }`;
+    }
+
+    return `Mostrando ${filteredProducts.length} de ${searchResults.length} produtos`;
+  }, [isLoading, filteredProducts.length, searchResults.length]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -106,28 +119,26 @@ const Search = () => {
             </aside>
 
             <div className="flex-1 space-y-6">
-              <h2 className="text-3xl font-bold text-foreground">{productsTitle}</h2>
+              <h2 className="text-3xl font-bold text-foreground">
+                {productsTitle}
+              </h2>
 
-              <ProductFilters
-                filters={filters}
-                bounds={bounds}
-                onFiltersChange={updateFilters}
-                onReset={resetFilters}
-                isResetDisabled={areFiltersDefault}
-                disabled={isLoading}
-              />
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <ProductFiltersLauncher
+                  filters={filters}
+                  bounds={bounds}
+                  onFiltersChange={updateFilters}
+                  onReset={resetFilters}
+                  isResetDisabled={areFiltersDefault}
+                  disabled={isLoading}
+                  areFiltersDefault={areFiltersDefault}
+                  activeFiltersCount={activeFiltersCount}
+                  title="Filtros da busca"
+                  description="Refine os resultados por preço, disponibilidade e ordenação."
+                />
 
-              <div className="flex items-center justify-between">
-                <p className="text-muted-foreground">
-                  {isLoading
-                    ? "Carregando produtos..."
-                    : filteredProducts.length === searchResults.length
-                    ? `${searchResults.length} ${
-                        searchResults.length === 1
-                          ? "produto encontrado"
-                          : "produtos encontrados"
-                      }`
-                    : `Mostrando ${filteredProducts.length} de ${searchResults.length} produtos`}
+                <p className="text-sm text-muted-foreground sm:text-right">
+                  {resultsSummary}
                 </p>
               </div>
 
