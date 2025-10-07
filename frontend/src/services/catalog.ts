@@ -58,10 +58,12 @@ type ApiProduct = {
 };
 
 type ApiCategoryDetails = ApiCategorySummary & {
-  products: ApiProduct[];
+  products?: ApiProduct[] | null;
 };
 
-function mapCategorySummary(category: ApiCategorySummary | null | undefined): ProductCategory | null {
+function mapCategorySummary(
+  category: ApiCategorySummary | null | undefined
+): ProductCategory | null {
   if (!category) {
     return null;
   }
@@ -74,7 +76,9 @@ function mapCategorySummary(category: ApiCategorySummary | null | undefined): Pr
   } satisfies ProductCategory;
 }
 
-function mapCategorySummaryWithCount(category: ApiCategorySummary): CategorySummary {
+function mapCategorySummaryWithCount(
+  category: ApiCategorySummary
+): CategorySummary {
   return {
     id: category.id,
     slug: category.slug,
@@ -84,7 +88,9 @@ function mapCategorySummaryWithCount(category: ApiCategorySummary): CategorySumm
   } satisfies CategorySummary;
 }
 
-function mapProductImage(image: ApiProductImage | null | undefined): ProductImage | undefined {
+function mapProductImage(
+  image: ApiProductImage | null | undefined
+): ProductImage | undefined {
   if (!image) {
     return undefined;
   }
@@ -99,7 +105,8 @@ function mapProductImage(image: ApiProductImage | null | undefined): ProductImag
 }
 
 function mapProduct(apiProduct: ApiProduct): Product {
-  const primaryImage = mapProductImage(apiProduct.primary_image ?? undefined) ?? undefined;
+  const primaryImage =
+    mapProductImage(apiProduct.primary_image ?? undefined) ?? undefined;
   const images = (apiProduct.images ?? [])
     ?.map(mapProductImage)
     .filter((image): image is ProductImage => Boolean(image));
@@ -176,9 +183,12 @@ export async function fetchCategory(slug: string): Promise<CategoryDetails> {
   );
 
   const summary = mapCategorySummaryWithCount(response.data);
+  const apiProducts = Array.isArray(response.data.products)
+    ? response.data.products
+    : [];
 
   return {
     ...summary,
-    products: response.data.products.map(mapProduct),
+    products: apiProducts.map(mapProduct),
   } satisfies CategoryDetails;
 }

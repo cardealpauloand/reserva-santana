@@ -37,14 +37,18 @@ class ProductResource extends JsonResource
                 'alt' => $this->primaryImage?->alt,
                 'position' => $this->primaryImage?->position,
             ]),
-            'images' => $this->whenLoaded('images', fn () => $this->images->map(fn ($image) => [
+            'images' => $this->whenLoaded('images', fn() => $this->images->map(fn($image) => [
                 'id' => $image->id,
                 'url' => $image->url,
                 'alt' => $image->alt,
                 'is_primary' => (bool) $image->is_primary,
                 'position' => $image->position,
             ])),
-            'categories' => CategorySummaryResource::collection($this->whenLoaded('categories')),
+            'categories' => $this->when(
+                $this->resource->relationLoaded('categories'),
+                fn() => CategorySummaryResource::collection($this->categories),
+                []
+            ),
         ];
     }
 }
