@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Api\CategoryController;
@@ -15,6 +16,7 @@ Route::prefix('catalog')->group(function (): void {
 });
 
 Route::prefix('admin')->group(function (): void {
+    Route::get('dashboard', DashboardController::class);
     Route::apiResource('products', AdminProductController::class)->except(['create', 'edit']);
 
     Route::prefix('stock')->group(function (): void {
