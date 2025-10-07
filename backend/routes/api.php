@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ShippingController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('catalog')->group(function (): void {
@@ -13,6 +14,10 @@ Route::prefix('catalog')->group(function (): void {
 
     Route::get('categories', [CategoryController::class, 'index']);
     Route::get('categories/{category:slug}', [CategoryController::class, 'show']);
+});
+
+Route::prefix('shipping')->group(function (): void {
+    Route::post('quote', [ShippingController::class, 'quote']);
 });
 
 Route::prefix('admin')->group(function (): void {

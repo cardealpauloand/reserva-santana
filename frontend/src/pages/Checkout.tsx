@@ -10,7 +10,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, MapPin, Plus, Check, CreditCard, QrCode, Barcode } from "lucide-react";
+import { Loader2, MapPin, Plus, Check, CreditCard, QrCode, Barcode, Truck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { TablesInsert } from "@/integrations/supabase/types";
+import { getShippingQuotes, type ShippingQuote } from "@/services/shipping";
 
 interface SavedAddress {
   id: string;
@@ -136,6 +137,9 @@ const Checkout = () => {
     state: "",
   });
   const [currentStep, setCurrentStep] = useState(0);
+  const [shippingQuotes, setShippingQuotes] = useState<ShippingQuote[] | null>(null);
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [selectedShipping, setSelectedShipping] = useState<ShippingQuote | null>(null);
   const [paymentData, setPaymentData] = useState<PaymentData>({
     method: "pix",
     installments: "1",
@@ -225,6 +229,31 @@ const Checkout = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const normalizedCep = (cep: string) => cep.replace(/\D/g, "");
+
+  const fetchQuotes = useCallback(async (zip?: string) => {
+    const cep = normalizedCep(zip ?? formData.zipCode);
+    if (cep.length !== 8 || items.length === 0) return;
+
+    setShippingLoading(true);
+    setSelectedShipping(null);
+    try {
+      const quotes = await getShippingQuotes({
+        destination_zip: cep,
+        items: items.map((i) => ({ quantity: i.quantity })),
+      });
+      setShippingQuotes(quotes);
+      setSelectedShipping(quotes[0] ?? null);
+    } catch (err) {
+      console.error("Failed to fetch shipping quotes", err);
+      setShippingQuotes(null);
+      setSelectedShipping(null);
+      toast({ title: "Erro ao calcular frete", description: "Verifique o CEP e tente novamente.", variant: "destructive" });
+    } finally {
+      setShippingLoading(false);
+    }
+  }, [formData.zipCode, items, toast]);
 
   const handlePaymentMethodChange = (value: PaymentMethod) => {
     setPaymentData((prev) => ({
@@ -340,6 +369,11 @@ const Checkout = () => {
       return;
     }
 
+    if (currentStep === 0 && !selectedShipping) {
+      toast({ title: "Selecione o frete", description: "Informe o CEP e escolha uma opção de entrega.", variant: "destructive" });
+      return;
+    }
+
     if (currentStep === 1 && !validatePaymentStep()) {
       return;
     }
@@ -404,9 +438,19 @@ const Checkout = () => {
 
       const orderPayload: TablesInsert<"orders"> = {
         user_id: user.id,
-        total: cartTotal,
+        total: orderTotal,
         status: "pending",
-        shipping_address: formData,
+        shipping_address: {
+          ...formData,
+          shipping: selectedShipping
+            ? {
+                service_code: selectedShipping.service_code,
+                service_name: selectedShipping.service_name,
+                price: selectedShipping.price,
+                deadline_days: selectedShipping.deadline_days,
+              }
+            : null,
+        },
       };
 
       const { data: order, error: orderError } = await supabase
@@ -462,6 +506,9 @@ const Checkout = () => {
     navigate("/carrinho");
     return null;
   }
+
+  const shippingValue = selectedShipping?.price ?? 0;
+  const orderTotal = cartTotal + shippingValue;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -615,7 +662,17 @@ const Checkout = () => {
                             id="zipCode"
                             name="zipCode"
                             value={formData.zipCode}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                              handleChange(e);
+                              const value = e.target.value.replace(/\D/g, "");
+                              if (value.length === 8) {
+                                // auto-fetch when CEP complete
+                                fetchQuotes(e.target.value);
+                              } else {
+                                setShippingQuotes(null);
+                                setSelectedShipping(null);
+                              }
+                            }}
                           />
                         </div>
                       </div>
@@ -680,6 +737,48 @@ const Checkout = () => {
                           value={formData.state}
                           onChange={handleChange}
                         />
+                      </div>
+
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center gap-2">
+                          <Truck className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-semibold">Opções de frete</span>
+                        </div>
+                        <div className="rounded-lg border border-border/80 p-3">
+                          {shippingLoading && (
+                            <div className="text-sm text-muted-foreground flex items-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin" /> Calculando frete...
+                            </div>
+                          )}
+                          {!shippingLoading && !shippingQuotes && (
+                            <div className="text-sm text-muted-foreground">Informe o CEP para calcular o frete.</div>
+                          )}
+                          {!shippingLoading && (shippingQuotes?.length ?? 0) === 0 && (
+                            <div className="text-sm text-muted-foreground">Nenhuma opção disponível para o CEP informado.</div>
+                          )}
+                          {!shippingLoading && (shippingQuotes?.length ?? 0) > 0 && (
+                            <div className="space-y-2">
+                              {shippingQuotes!.map((q) => (
+                                <label key={q.service_code} className="flex items-center justify-between gap-3 rounded-md border p-3 cursor-pointer hover:border-primary/60">
+                                  <div className="flex items-center gap-3">
+                                    <input
+                                      type="radio"
+                                      name="shipping"
+                                      className="h-4 w-4"
+                                      checked={selectedShipping?.service_code === q.service_code}
+                                      onChange={() => setSelectedShipping(q)}
+                                    />
+                                    <div>
+                                      <div className="text-sm font-medium text-foreground">{q.service_name}</div>
+                                      <div className="text-xs text-muted-foreground">Prazo: {q.deadline_days} dia(s) útil(eis)</div>
+                                    </div>
+                                  </div>
+                                  <div className="text-sm font-semibold text-foreground">R$ {q.price.toFixed(2)}</div>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex justify-end pt-4">
@@ -830,6 +929,17 @@ const Checkout = () => {
 
                       <div className="space-y-3 rounded-lg border border-border/80 p-4">
                         <p className="text-sm font-semibold text-foreground">Pagamento</p>
+                      <div className="space-y-3 rounded-lg border border-border/80 p-4">
+                        <p className="text-sm font-semibold text-foreground">Frete</p>
+                        {selectedShipping ? (
+                          <div className="text-sm text-muted-foreground flex items-center justify-between">
+                            <span>{selectedShipping.service_name} · {selectedShipping.deadline_days} dia(s) útil(eis)</span>
+                            <span className="text-foreground font-medium">R$ {selectedShipping.price.toFixed(2)}</span>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-muted-foreground">Nenhuma opção selecionada</div>
+                        )}
+                      </div>
                         <div className="text-sm text-muted-foreground space-y-1">
                           <p>{paymentMethodLabels[paymentData.method]}</p>
                           {paymentData.method === "credit_card" && (
@@ -903,45 +1013,50 @@ const Checkout = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Frete</span>
-                    <span className="text-green-600 font-medium">Grátis</span>
+                    {selectedShipping ? (
+                      <span className="text-foreground">R$ {shippingValue.toFixed(2)}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </div>
                 </div>
                 
                 <div className="border-t border-border pt-4">
                   <div className="flex justify-between">
                     <span className="text-lg font-semibold text-foreground">Total</span>
-                    <span className="text-2xl font-bold text-primary">
-                      R$ {cartTotal.toFixed(2)}
-                    </span>
+                    <span className="text-2xl font-bold text-primary">R$ {orderTotal.toFixed(2)}</span>
                   </div>
                 </div>
 
-                <div className="border-t border-border pt-4 space-y-3 text-sm">
-                  <div className="space-y-1">
-                    <span className="text-xs uppercase tracking-wide text-muted-foreground">Pagamento</span>
-                    <span className="font-medium text-foreground">
+                <div className="border-t border-border pt-4 space-y-5 text-sm">
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Pagamento</p>
+                    <p className="font-medium text-foreground mt-1">
                       {paymentMethodLabels[paymentData.method]}
-                    </span>
+                    </p>
                     {paymentData.method === "credit_card" && (
-                      <span className="text-muted-foreground">
+                      <p className="text-muted-foreground mt-1">
                         Cartão final {getCardLastDigits(paymentData.cardNumber)} · {paymentData.installments === "1" ? "À vista" : `${paymentData.installments}x sem juros`}
-                      </span>
+                      </p>
                     )}
                     {paymentData.method === "pix" && (
-                      <span className="text-muted-foreground">Código PIX disponível após confirmação</span>
+                      <p className="text-muted-foreground mt-1">Código PIX disponível após confirmação</p>
                     )}
                     {paymentData.method === "boleto" && (
-                      <span className="text-muted-foreground">Boleto enviado por email após o pedido</span>
+                      <p className="text-muted-foreground mt-1">Boleto enviado por email após o pedido</p>
                     )}
                   </div>
 
-                  <div className="space-y-1">
-                    <span className="text-xs uppercase tracking-wide text-muted-foreground">Entrega</span>
-                    <span className="font-medium text-foreground">
+                  <div className="space-y-2 border-t border-border pt-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Entrega</p>
+                    <p className="font-medium text-foreground mt-1">
                       {formData.city ? `${formData.city} - ${formData.state}` : "Informe o endereço"}
-                    </span>
+                    </p>
                     {formData.zipCode && (
-                      <span className="text-muted-foreground">CEP {formData.zipCode}</span>
+                      <p className="text-muted-foreground mt-1">CEP: {formData.zipCode}</p>
+                    )}
+                    {selectedShipping && (
+                      <p className="text-muted-foreground mt-1">{selectedShipping.service_name} · R$ {selectedShipping.price.toFixed(2)}</p>
                     )}
                   </div>
                 </div>

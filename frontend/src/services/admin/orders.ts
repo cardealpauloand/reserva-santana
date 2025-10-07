@@ -41,6 +41,12 @@ export type ShippingAddress = {
   city: string;
   state: string;
   zip_code: string;
+  shipping?: {
+    service_code: string;
+    service_name: string;
+    price: number;
+    deadline_days: number;
+  } | null;
 };
 
 export type AdminOrderItem = Tables<"order_items">;
@@ -78,6 +84,14 @@ function mapShippingAddress(
     city: String(record.city ?? ""),
     state: String(record.state ?? ""),
     zip_code: String(record.zip_code ?? ""),
+    shipping: (record as any).shipping
+      ? {
+          service_code: String((record as any).shipping?.service_code ?? ""),
+          service_name: String((record as any).shipping?.service_name ?? ""),
+          price: Number((record as any).shipping?.price ?? 0),
+          deadline_days: Number((record as any).shipping?.deadline_days ?? 0),
+        }
+      : null,
   } satisfies ShippingAddress;
 }
 

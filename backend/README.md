@@ -24,6 +24,40 @@ This Laravel backend is configured to use PostgreSQL and ships with migrations t
 3. Ensure the target database exists (`createdb reserva_santana`) and that the Postgres service is running.
 4. Run the migrations: `php artisan migrate`
 
+### Shipping (Correios) configuration
+
+Add these variables to your `.env` (example values):
+
+```
+SHIPPING_ORIGIN_ZIP=01001-000
+SHIPPING_DEFAULT_ITEM_WEIGHT_KG=0.3
+SHIPPING_DEFAULT_LENGTH_CM=20
+SHIPPING_DEFAULT_WIDTH_CM=20
+SHIPPING_DEFAULT_HEIGHT_CM=15
+SHIPPING_DEFAULT_DIAMETER_CM=0
+SHIPPING_CORREIOS_SERVICE_CODES=04014,04510
+```
+
+The endpoint `POST /api/shipping/quote` expects:
+
+```
+{
+	"destination_zip": "04567-000",
+	"items": [{ "quantity": 2 }]
+}
+```
+
+It returns a list of quotes like:
+
+```
+{
+	"data": [
+		{ "service_code": "04014", "service_name": "SEDEX", "price": 22.9, "deadline_days": 2 },
+		{ "service_code": "04510", "service_name": "PAC",   "price": 16.7, "deadline_days": 6 }
+	]
+}
+```
+
 ### Catalog data & API
 
 -   Seed the catalog with wine categories, sample products, and images using `php artisan db:seed`.
