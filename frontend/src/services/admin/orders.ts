@@ -28,7 +28,7 @@ export const ADMIN_ORDER_STATUS_META: Record<
   shipped: { label: "Enviado", badgeVariant: "outline" },
   delivered: { label: "Entregue", badgeVariant: "default" },
   canceled: { label: "Cancelado", badgeVariant: "destructive" },
-  cancelled: { label: "Cancelado", badgeVariant: "destructive" },
+  cancelled: { label: "Cancelado", badgeVariant: "destructive" }, // compat
   refunded: { label: "Reembolsado", badgeVariant: "secondary" },
 };
 
@@ -41,6 +41,12 @@ export type ShippingAddress = {
   city: string;
   state: string;
   zip_code: string;
+  shipping?: {
+    service_code: string;
+    service_name: string;
+    price: number;
+    deadline_days: number;
+  } | null;
 };
 
 export type AdminOrderItem = OrderItem;
@@ -56,25 +62,57 @@ export type AdminOrder = {
   items: AdminOrderItem[];
 };
 
-function mapOrder(order: Order): AdminOrder {
+// -- Helpers ---------------------------------------------------------------
+
+function mapShippingAddress(
+  record: any | null | undefined
+): ShippingAddress | null {
+  if (!record) return null;
+
   return {
-    id: order.id,
-    userId: order.user_id,
-    total: order.total,
-    status: order.status,
-    createdAt: order.created_at,
-    updatedAt: order.updated_at,
-    shippingAddress: order.shipping_address,
-    items: order.orderItems || [],
+    name: String(record.name ?? ""),
+    street: String(record.street ?? ""),
+    number: String(record.number ?? ""),
+    complement: (record.complement as string | null | undefined) ?? null,
+    neighborhood: String(record.neighborhood ?? ""),
+    city: String(record.city ?? ""),
+    state: String(record.state ?? ""),
+    zip_code: String(record.zip_code ?? ""),
+    shipping: record.shipping
+      ? {
+          service_code: String(record.shipping?.service_code ?? ""),
+          service_name: String(record.shipping?.service_name ?? ""),
+          price: Number(record.shipping?.price ?? 0),
+          deadline_days: Number(record.shipping?.deadline_days ?? 0),
+        }
+      : null,
   };
 }
 
+function mapOrder(order: Order & any): AdminOrder {
+  // Aceita tanto snake_case quanto camelCase vindos da API
+  return {
+    id: Number(order.id),
+    userId: Number(order.user_id ?? order.userId),
+    total: Number(order.total ?? 0),
+    status: String(order.status ?? ""),
+    createdAt: String(order.created_at ?? order.createdAt ?? ""),
+    updatedAt: String(order.updated_at ?? order.updatedAt ?? ""),
+    shippingAddress: mapShippingAddress(
+      order.shipping_address ?? order.shippingAddress
+    ),
+    items: (order.order_items ?? order.orderItems ?? []) as AdminOrderItem[],
+  };
+}
+
+// -- API -------------------------------------------------------------------
+
 export async function listAdminOrders(): Promise<AdminOrder[]> {
-  const orders = await apiFetch<Order[]>('/admin/orders', {
-    method: 'GET',
+  const orders = await apiFetch<Order[]>("/admin/orders", {
+    method: "GET",
   });
 
-  return orders.map(mapOrder);
+  return (orders ?? []).map(mapOrder);
 }
 
 export async function updateAdminOrderStatus(
@@ -82,8 +120,9 @@ export async function updateAdminOrderStatus(
   status: string
 ): Promise<AdminOrder> {
   const order = await apiFetch<Order>(`/admin/orders/${orderId}`, {
-    method: 'PATCH',
+    method: "PATCH",
     body: JSON.stringify({ status }),
+    headers: { "Content-Type": "application/json" },
   });
 
   return mapOrder(order);

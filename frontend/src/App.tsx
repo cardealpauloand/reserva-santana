@@ -20,6 +20,7 @@ import ProductManagement from "./pages/ProductManagement";
 import Orders from "./pages/Orders";
 import AdminOrders from "./pages/AdminOrders";
 import NotFound from "./pages/NotFound";
+import { AgeGate } from "@/components/AgeGate";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <AgeGate />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/categoria/:category" element={<Category />} />

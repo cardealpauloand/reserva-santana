@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\ShippingController;
 use Illuminate\Support\Facades\Route;
 
 // Public catalog routes
@@ -30,6 +31,10 @@ Route::prefix('auth')->group(function (): void {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('user', [AuthController::class, 'user']);
     });
+});
+
+Route::prefix('shipping')->group(function (): void {
+    Route::post('quote', [ShippingController::class, 'quote']);
 });
 
 // Protected user routes

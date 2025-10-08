@@ -11,7 +11,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { addressesService } from "@/services/addresses";
 import { ordersService } from "@/services/orders";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, MapPin, Plus, Check, CreditCard, QrCode, Barcode } from "lucide-react";
+import {
+  Loader2,
+  MapPin,
+  Plus,
+  Check,
+  CreditCard,
+  QrCode,
+  Barcode,
+  Truck,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,8 +32,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Address } from "@/types/address";
+import { getShippingQuotes, type ShippingQuote } from "@/services/shipping";
 
-interface SavedAddress extends Address {}
+type SavedAddress = Address;
 
 type PaymentMethod = "pix" | "credit_card" | "boleto";
 
@@ -110,7 +120,9 @@ const Checkout = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | number>("new");
+  const [selectedAddressId, setSelectedAddressId] = useState<string | number>(
+    "new"
+  );
   const [saveNewAddress, setSaveNewAddress] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -126,6 +138,12 @@ const Checkout = () => {
     state: "",
   });
   const [currentStep, setCurrentStep] = useState(0);
+  const [shippingQuotes, setShippingQuotes] = useState<ShippingQuote[] | null>(
+    null
+  );
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [selectedShipping, setSelectedShipping] =
+    useState<ShippingQuote | null>(null);
   const [paymentData, setPaymentData] = useState<PaymentData>({
     method: "pix",
     installments: "1",
@@ -210,6 +228,38 @@ const Checkout = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const normalizedCep = (cep: string) => cep.replace(/\D/g, "");
+
+  const fetchQuotes = useCallback(
+    async (zip?: string) => {
+      const cep = normalizedCep(zip ?? formData.zipCode);
+      if (cep.length !== 8 || items.length === 0) return;
+
+      setShippingLoading(true);
+      setSelectedShipping(null);
+      try {
+        const quotes = await getShippingQuotes({
+          destination_zip: cep,
+          items: items.map((i) => ({ quantity: i.quantity })),
+        });
+        setShippingQuotes(quotes);
+        setSelectedShipping(quotes[0] ?? null);
+      } catch (err) {
+        console.error("Failed to fetch shipping quotes", err);
+        setShippingQuotes(null);
+        setSelectedShipping(null);
+        toast({
+          title: "Erro ao calcular frete",
+          description: "Verifique o CEP e tente novamente.",
+          variant: "destructive",
+        });
+      } finally {
+        setShippingLoading(false);
+      }
+    },
+    [formData.zipCode, items, toast]
+  );
+
   const handlePaymentMethodChange = (value: PaymentMethod) => {
     setPaymentData((prev) => ({
       ...prev,
@@ -240,19 +290,22 @@ const Checkout = () => {
   };
 
   const validateShippingStep = () => {
-    const requiredFields: Array<{ key: keyof typeof formData; label: string }> = [
-      { key: "name", label: "o nome completo" },
-      { key: "email", label: "o email" },
-      { key: "phone", label: "o telefone" },
-      { key: "zipCode", label: "o CEP" },
-      { key: "street", label: "a rua" },
-      { key: "number", label: "o número" },
-      { key: "neighborhood", label: "o bairro" },
-      { key: "city", label: "a cidade" },
-      { key: "state", label: "o estado" },
-    ];
+    const requiredFields: Array<{ key: keyof typeof formData; label: string }> =
+      [
+        { key: "name", label: "o nome completo" },
+        { key: "email", label: "o email" },
+        { key: "phone", label: "o telefone" },
+        { key: "zipCode", label: "o CEP" },
+        { key: "street", label: "a rua" },
+        { key: "number", label: "o número" },
+        { key: "neighborhood", label: "o bairro" },
+        { key: "city", label: "a cidade" },
+        { key: "state", label: "o estado" },
+      ];
 
-    const missingField = requiredFields.find((field) => !formData[field.key].trim());
+    const missingField = requiredFields.find(
+      (field) => !formData[field.key].trim()
+    );
 
     if (missingField) {
       toast({
@@ -278,7 +331,9 @@ const Checkout = () => {
       { key: "cardCvv", label: "o código de segurança" },
     ];
 
-    const missingField = requiredFields.find((field) => !paymentData[field.key].trim());
+    const missingField = requiredFields.find(
+      (field) => !paymentData[field.key].trim()
+    );
 
     if (missingField) {
       toast({
@@ -324,6 +379,15 @@ const Checkout = () => {
       return;
     }
 
+    if (currentStep === 0 && !selectedShipping) {
+      toast({
+        title: "Selecione o frete",
+        description: "Informe o CEP e escolha uma opção de entrega.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (currentStep === 1 && !validatePaymentStep()) {
       return;
     }
@@ -342,7 +406,7 @@ const Checkout = () => {
       handleNextStep();
       return;
     }
-    
+
     if (!user) {
       toast({
         title: "Erro",
@@ -365,7 +429,6 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-      // Save new address if checkbox is checked and using new address
       if (saveNewAddress && selectedAddressId === "new" && user) {
         try {
           await addressesService.createAddress({
@@ -383,8 +446,7 @@ const Checkout = () => {
         }
       }
 
-      // Create order with items
-      await ordersService.createOrder({
+      const createdOrder = await ordersService.createOrder({
         shipping_address: {
           name: formData.name,
           email: formData.email,
@@ -406,15 +468,19 @@ const Checkout = () => {
       });
 
       clearCart();
-      
+
       const paymentSummary =
         paymentData.method === "credit_card"
-          ? `${paymentMethodLabels[paymentData.method]} final ${getCardLastDigits(paymentData.cardNumber)}`
+          ? `${
+              paymentMethodLabels[paymentData.method]
+            } final ${getCardLastDigits(paymentData.cardNumber)}`
           : paymentMethodLabels[paymentData.method];
 
       toast({
         title: "Pedido realizado!",
-        description: `Seu pedido foi confirmado com sucesso. Forma de pagamento: ${paymentSummary}`,
+        description: `Seu pedido foi confirmado com sucesso. Número do pedido: ${
+          createdOrder?.id ?? "—"
+        }. Forma de pagamento: ${paymentSummary}`,
       });
 
       navigate("/");
@@ -435,10 +501,13 @@ const Checkout = () => {
     return null;
   }
 
+  const shippingValue = selectedShipping?.price ?? 0;
+  const orderTotal = cartTotal + shippingValue;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
+
       <main className="flex-1 container py-8 px-4 md:px-6">
         <h1 className="text-3xl md:text-4xl font-bold mb-8 text-foreground">
           Finalizar Compra
@@ -472,8 +541,12 @@ const Checkout = () => {
                     {isCompleted ? <Check className="h-4 w-4" /> : index + 1}
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">{step.title}</p>
-                    <p className="text-xs text-muted-foreground">{step.description}</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {step.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {step.description}
+                    </p>
                   </div>
                 </div>
               </li>
@@ -493,18 +566,35 @@ const Checkout = () => {
                     <div className="space-y-6">
                       {savedAddresses.length > 0 && (
                         <div className="space-y-4">
-                          <Label className="text-base font-semibold">Escolha o endereço</Label>
-                          <RadioGroup value={String(selectedAddressId)} onValueChange={(val) => handleAddressSelection(val === "new" ? "new" : Number(val))}>
+                          <Label className="text-base font-semibold">
+                            Escolha o endereço
+                          </Label>
+                          <RadioGroup
+                            value={String(selectedAddressId)}
+                            onValueChange={(val) =>
+                              handleAddressSelection(
+                                val === "new" ? "new" : Number(val)
+                              )
+                            }
+                          >
                             {savedAddresses.map((address) => (
-                              <div key={address.id} className="flex items-start space-x-3 space-y-0">
-                                <RadioGroupItem value={String(address.id)} id={String(address.id)} />
+                              <div
+                                key={address.id}
+                                className="flex items-start space-x-3 space-y-0"
+                              >
+                                <RadioGroupItem
+                                  value={String(address.id)}
+                                  id={String(address.id)}
+                                />
                                 <Label
                                   htmlFor={String(address.id)}
                                   className="flex-1 cursor-pointer space-y-1 font-normal"
                                 >
                                   <div className="flex items-center gap-2">
                                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium">{address.name}</span>
+                                    <span className="font-medium">
+                                      {address.name}
+                                    </span>
                                     {address.is_default && (
                                       <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
                                         Padrão
@@ -513,18 +603,25 @@ const Checkout = () => {
                                   </div>
                                   <div className="text-sm text-muted-foreground">
                                     {address.street}, {address.number}
-                                    {address.complement && ` - ${address.complement}`}
+                                    {address.complement &&
+                                      ` - ${address.complement}`}
                                   </div>
                                   <div className="text-sm text-muted-foreground">
-                                    {address.neighborhood}, {address.city} - {address.state}
+                                    {address.neighborhood}, {address.city} -{" "}
+                                    {address.state}
                                   </div>
-                                  <div className="text-sm text-muted-foreground">CEP: {address.zip_code}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    CEP: {address.zip_code}
+                                  </div>
                                 </Label>
                               </div>
                             ))}
                             <div className="flex items-center space-x-3 space-y-0">
                               <RadioGroupItem value="new" id="new" />
-                              <Label htmlFor="new" className="flex items-center gap-2 cursor-pointer font-normal">
+                              <Label
+                                htmlFor="new"
+                                className="flex items-center gap-2 cursor-pointer font-normal"
+                              >
                                 <Plus className="h-4 w-4" />
                                 Usar novo endereço
                               </Label>
@@ -538,7 +635,9 @@ const Checkout = () => {
                           <Checkbox
                             id="save-address"
                             checked={saveNewAddress}
-                            onCheckedChange={(checked) => setSaveNewAddress(checked as boolean)}
+                            onCheckedChange={(checked) =>
+                              setSaveNewAddress(checked as boolean)
+                            }
                           />
                           <Label
                             htmlFor="save-address"
@@ -587,7 +686,17 @@ const Checkout = () => {
                             id="zipCode"
                             name="zipCode"
                             value={formData.zipCode}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                              handleChange(e);
+                              const value = e.target.value.replace(/\D/g, "");
+                              if (value.length === 8) {
+                                // auto-fetch when CEP complete
+                                fetchQuotes(e.target.value);
+                              } else {
+                                setShippingQuotes(null);
+                                setSelectedShipping(null);
+                              }
+                            }}
                           />
                         </div>
                       </div>
@@ -654,6 +763,70 @@ const Checkout = () => {
                         />
                       </div>
 
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center gap-2">
+                          <Truck className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-semibold">
+                            Opções de frete
+                          </span>
+                        </div>
+                        <div className="rounded-lg border border-border/80 p-3">
+                          {shippingLoading && (
+                            <div className="text-sm text-muted-foreground flex items-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                              Calculando frete...
+                            </div>
+                          )}
+                          {!shippingLoading && !shippingQuotes && (
+                            <div className="text-sm text-muted-foreground">
+                              Informe o CEP para calcular o frete.
+                            </div>
+                          )}
+                          {!shippingLoading &&
+                            (shippingQuotes?.length ?? 0) === 0 && (
+                              <div className="text-sm text-muted-foreground">
+                                Nenhuma opção disponível para o CEP informado.
+                              </div>
+                            )}
+                          {!shippingLoading &&
+                            (shippingQuotes?.length ?? 0) > 0 && (
+                              <div className="space-y-2">
+                                {shippingQuotes!.map((q) => (
+                                  <label
+                                    key={q.service_code}
+                                    className="flex items-center justify-between gap-3 rounded-md border p-3 cursor-pointer hover:border-primary/60"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <input
+                                        type="radio"
+                                        name="shipping"
+                                        className="h-4 w-4"
+                                        checked={
+                                          selectedShipping?.service_code ===
+                                          q.service_code
+                                        }
+                                        onChange={() => setSelectedShipping(q)}
+                                      />
+                                      <div>
+                                        <div className="text-sm font-medium text-foreground">
+                                          {q.service_name}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                          Prazo: {q.deadline_days} dia(s)
+                                          útil(eis)
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="text-sm font-semibold text-foreground">
+                                      R$ {q.price.toFixed(2)}
+                                    </div>
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                        </div>
+                      </div>
+
                       <div className="flex justify-end pt-4">
                         <Button
                           type="button"
@@ -670,19 +843,39 @@ const Checkout = () => {
                   {currentStep === 1 && (
                     <div className="space-y-6">
                       <div className="space-y-4">
-                        <Label className="text-base font-semibold">Escolha a forma de pagamento</Label>
-                        <RadioGroup value={paymentData.method} onValueChange={(value) => handlePaymentMethodChange(value as PaymentMethod)}>
+                        <Label className="text-base font-semibold">
+                          Escolha a forma de pagamento
+                        </Label>
+                        <RadioGroup
+                          value={paymentData.method}
+                          onValueChange={(value) =>
+                            handlePaymentMethodChange(value as PaymentMethod)
+                          }
+                        >
                           {paymentMethods.map((method) => {
                             const Icon = method.icon;
                             return (
-                              <div key={method.value} className="flex items-start gap-3 rounded-lg border border-border/80 p-4 hover:border-primary/60 transition-colors">
-                                <RadioGroupItem value={method.value} id={method.value} />
-                                <Label htmlFor={method.value} className="flex-1 cursor-pointer space-y-1 font-normal">
+                              <div
+                                key={method.value}
+                                className="flex items-start gap-3 rounded-lg border border-border/80 p-4 hover:border-primary/60 transition-colors"
+                              >
+                                <RadioGroupItem
+                                  value={method.value}
+                                  id={method.value}
+                                />
+                                <Label
+                                  htmlFor={method.value}
+                                  className="flex-1 cursor-pointer space-y-1 font-normal"
+                                >
                                   <div className="flex items-center gap-2">
                                     <Icon className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium text-foreground">{method.label}</span>
+                                    <span className="font-medium text-foreground">
+                                      {method.label}
+                                    </span>
                                   </div>
-                                  <p className="text-sm text-muted-foreground">{method.description}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {method.description}
+                                  </p>
                                 </Label>
                               </div>
                             );
@@ -693,7 +886,9 @@ const Checkout = () => {
                       {paymentData.method === "credit_card" && (
                         <div className="space-y-4">
                           <div>
-                            <Label htmlFor="cardName">Nome impresso no cartão</Label>
+                            <Label htmlFor="cardName">
+                              Nome impresso no cartão
+                            </Label>
                             <Input
                               id="cardName"
                               name="cardName"
@@ -738,16 +933,27 @@ const Checkout = () => {
                             </div>
                             <div>
                               <Label htmlFor="installments">Parcelas</Label>
-                              <Select value={paymentData.installments} onValueChange={handleInstallmentsChange}>
+                              <Select
+                                value={paymentData.installments}
+                                onValueChange={handleInstallmentsChange}
+                              >
                                 <SelectTrigger id="installments">
                                   <SelectValue placeholder="Selecione" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="1">À vista</SelectItem>
-                                  <SelectItem value="2">2x sem juros</SelectItem>
-                                  <SelectItem value="3">3x sem juros</SelectItem>
-                                  <SelectItem value="6">6x sem juros</SelectItem>
-                                  <SelectItem value="12">12x sem juros</SelectItem>
+                                  <SelectItem value="2">
+                                    2x sem juros
+                                  </SelectItem>
+                                  <SelectItem value="3">
+                                    3x sem juros
+                                  </SelectItem>
+                                  <SelectItem value="6">
+                                    6x sem juros
+                                  </SelectItem>
+                                  <SelectItem value="12">
+                                    12x sem juros
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -757,13 +963,15 @@ const Checkout = () => {
 
                       {paymentData.method === "pix" && (
                         <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 text-sm text-muted-foreground">
-                          O código PIX será exibido após a confirmação do pedido.
+                          O código PIX será exibido após a confirmação do
+                          pedido.
                         </div>
                       )}
 
                       {paymentData.method === "boleto" && (
                         <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 text-sm text-muted-foreground">
-                          O boleto será enviado para o seu email e terá validade de 2 dias úteis.
+                          O boleto será enviado para o seu email e terá validade
+                          de 2 dias úteis.
                         </div>
                       )}
 
@@ -790,30 +998,77 @@ const Checkout = () => {
                   {currentStep === 2 && (
                     <div className="space-y-6">
                       <div className="space-y-3 rounded-lg border border-border/80 p-4">
-                        <p className="text-sm font-semibold text-foreground">Endereço de entrega</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          Endereço de entrega
+                        </p>
                         <div className="text-sm text-muted-foreground space-y-1">
                           <p>{formData.name}</p>
-                          <p>{formData.street}, {formData.number}{formData.complement && ` - ${formData.complement}`}</p>
-                          <p>{formData.neighborhood}, {formData.city} - {formData.state}</p>
+                          <p>
+                            {formData.street}, {formData.number}
+                            {formData.complement && ` - ${formData.complement}`}
+                          </p>
+                          <p>
+                            {formData.neighborhood}, {formData.city} -{" "}
+                            {formData.state}
+                          </p>
                           <p>CEP: {formData.zipCode}</p>
                           <p>Contato: {formData.phone}</p>
                         </div>
                       </div>
 
                       <div className="space-y-3 rounded-lg border border-border/80 p-4">
-                        <p className="text-sm font-semibold text-foreground">Pagamento</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          Pagamento
+                        </p>
+                        <div className="space-y-3 rounded-lg border border-border/80 p-4">
+                          <p className="text-sm font-semibold text-foreground">
+                            Frete
+                          </p>
+                          {selectedShipping ? (
+                            <div className="text-sm text-muted-foreground flex items-center justify-between">
+                              <span>
+                                {selectedShipping.service_name} ·{" "}
+                                {selectedShipping.deadline_days} dia(s)
+                                útil(eis)
+                              </span>
+                              <span className="text-foreground font-medium">
+                                R$ {selectedShipping.price.toFixed(2)}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-muted-foreground">
+                              Nenhuma opção selecionada
+                            </div>
+                          )}
+                        </div>
                         <div className="text-sm text-muted-foreground space-y-1">
                           <p>{paymentMethodLabels[paymentData.method]}</p>
                           {paymentData.method === "credit_card" && (
-                            <p>Cartão final {getCardLastDigits(paymentData.cardNumber)} · {paymentData.installments === "1" ? "À vista" : `${paymentData.installments}x sem juros`}</p>
+                            <p>
+                              Cartão final{" "}
+                              {getCardLastDigits(paymentData.cardNumber)} ·{" "}
+                              {paymentData.installments === "1"
+                                ? "À vista"
+                                : `${paymentData.installments}x sem juros`}
+                            </p>
                           )}
-                          {paymentData.method === "pix" && <p>A confirmação é imediata após o pagamento do PIX.</p>}
-                          {paymentData.method === "boleto" && <p>O boleto será enviado por email após finalizar o pedido.</p>}
+                          {paymentData.method === "pix" && (
+                            <p>
+                              A confirmação é imediata após o pagamento do PIX.
+                            </p>
+                          )}
+                          {paymentData.method === "boleto" && (
+                            <p>
+                              O boleto será enviado por email após finalizar o
+                              pedido.
+                            </p>
+                          )}
                         </div>
                       </div>
 
                       <div className="space-y-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 text-sm text-muted-foreground">
-                        Revise as informações antes de confirmar. Você receberá um email com todos os detalhes do pedido.
+                        Revise as informações antes de confirmar. Você receberá
+                        um email com todos os detalhes do pedido.
                       </div>
 
                       <div className="flex items-center justify-between pt-4">
@@ -867,53 +1122,85 @@ const Checkout = () => {
                     </div>
                   ))}
                 </div>
-                
+
                 <div className="border-t border-border pt-4">
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span className="text-foreground">R$ {cartTotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Frete</span>
-                    <span className="text-green-600 font-medium">Grátis</span>
-                  </div>
-                </div>
-                
-                <div className="border-t border-border pt-4">
-                  <div className="flex justify-between">
-                    <span className="text-lg font-semibold text-foreground">Total</span>
-                    <span className="text-2xl font-bold text-primary">
+                    <span className="text-foreground">
                       R$ {cartTotal.toFixed(2)}
                     </span>
                   </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Frete</span>
+                    {selectedShipping ? (
+                      <span className="text-foreground">
+                        R$ {shippingValue.toFixed(2)}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="border-t border-border pt-4 space-y-3 text-sm">
-                  <div className="space-y-1">
-                    <span className="text-xs uppercase tracking-wide text-muted-foreground">Pagamento</span>
-                    <span className="font-medium text-foreground">
-                      {paymentMethodLabels[paymentData.method]}
+                <div className="border-t border-border pt-4">
+                  <div className="flex justify-between">
+                    <span className="text-lg font-semibold text-foreground">
+                      Total
                     </span>
+                    <span className="text-2xl font-bold text-primary">
+                      R$ {orderTotal.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="border-t border-border pt-4 space-y-5 text-sm">
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Pagamento
+                    </p>
+                    <p className="font-medium text-foreground mt-1">
+                      {paymentMethodLabels[paymentData.method]}
+                    </p>
                     {paymentData.method === "credit_card" && (
-                      <span className="text-muted-foreground">
-                        Cartão final {getCardLastDigits(paymentData.cardNumber)} · {paymentData.installments === "1" ? "À vista" : `${paymentData.installments}x sem juros`}
-                      </span>
+                      <p className="text-muted-foreground mt-1">
+                        Cartão final {getCardLastDigits(paymentData.cardNumber)}{" "}
+                        ·{" "}
+                        {paymentData.installments === "1"
+                          ? "À vista"
+                          : `${paymentData.installments}x sem juros`}
+                      </p>
                     )}
                     {paymentData.method === "pix" && (
-                      <span className="text-muted-foreground">Código PIX disponível após confirmação</span>
+                      <p className="text-muted-foreground mt-1">
+                        Código PIX disponível após confirmação
+                      </p>
                     )}
                     {paymentData.method === "boleto" && (
-                      <span className="text-muted-foreground">Boleto enviado por email após o pedido</span>
+                      <p className="text-muted-foreground mt-1">
+                        Boleto enviado por email após o pedido
+                      </p>
                     )}
                   </div>
 
-                  <div className="space-y-1">
-                    <span className="text-xs uppercase tracking-wide text-muted-foreground">Entrega</span>
-                    <span className="font-medium text-foreground">
-                      {formData.city ? `${formData.city} - ${formData.state}` : "Informe o endereço"}
-                    </span>
+                  <div className="space-y-2 border-t border-border pt-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Entrega
+                    </p>
+                    <p className="font-medium text-foreground mt-1">
+                      {formData.city
+                        ? `${formData.city} - ${formData.state}`
+                        : "Informe o endereço"}
+                    </p>
                     {formData.zipCode && (
-                      <span className="text-muted-foreground">CEP {formData.zipCode}</span>
+                      <p className="text-muted-foreground mt-1">
+                        CEP: {formData.zipCode}
+                      </p>
+                    )}
+                    {selectedShipping && (
+                      <p className="text-muted-foreground mt-1">
+                        {selectedShipping.service_name} · R${" "}
+                        {selectedShipping.price.toFixed(2)}
+                      </p>
                     )}
                   </div>
                 </div>
