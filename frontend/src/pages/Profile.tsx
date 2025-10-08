@@ -6,27 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { profileService } from "@/services/profile";
+import { addressesService } from "@/services/addresses";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, MapPin, Package } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import type { Address } from "@/types/address";
 
-interface Profile {
+interface ProfileData {
   full_name: string;
   phone: string;
-}
-
-interface Address {
-  id: string;
-  name: string;
-  zip_code: string;
-  street: string;
-  number: string;
-  complement: string;
-  neighborhood: string;
-  city: string;
-  state: string;
-  is_default: boolean;
 }
 
 const Profile = () => {
@@ -37,13 +26,13 @@ const Profile = () => {
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
 
-  const [profile, setProfile] = useState<Profile>({
+  const [profile, setProfile] = useState<ProfileData>({
     full_name: "",
     phone: "",
   });
 
   const [addresses, setAddresses] = useState<Address[]>([]);
-  
+
   const [newAddress, setNewAddress] = useState({
     name: "",
     zip_code: "",
@@ -69,22 +58,18 @@ const Profile = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from("profiles" as any)
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error && error.code !== "PGRST116") throw error;
-
-      if (data) {
-        setProfile({
-          full_name: (data as any).full_name || "",
-          phone: (data as any).phone || "",
-        });
-      }
+      const data = await profileService.getProfile();
+      setProfile({
+        full_name: data.full_name || "",
+        phone: data.phone || "",
+      });
     } catch (error) {
       console.error("Error loading profile:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar perfil",
+        variant: "destructive",
+      });
     }
   };
 
@@ -93,17 +78,17 @@ const Profile = () => {
 
     setLoadingAddresses(true);
     try {
-      const { data, error } = await supabase
-        .from("addresses" as any)
-        .select("*")
-        .eq("user_id", user.id)
-        .order("is_default", { ascending: false });
-
-      if (error) throw error;
-
-      setAddresses((data as any) || []);
+      const data = await addressesService.getAddresses();
+      // Sort by is_default first
+      const sorted = data.sort((a, b) => (b.is_default ? 1 : 0) - (a.is_default ? 1 : 0));
+      setAddresses(sorted);
     } catch (error) {
       console.error("Error loading addresses:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar endereços",
+        variant: "destructive",
+      });
     } finally {
       setLoadingAddresses(false);
     }
@@ -115,15 +100,10 @@ const Profile = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from("profiles" as any)
-        .upsert({
-          user_id: user.id,
-          full_name: profile.full_name,
-          phone: profile.phone,
-        });
-
-      if (error) throw error;
+      await profileService.updateProfile({
+        full_name: profile.full_name,
+        phone: profile.phone,
+      });
 
       toast({
         title: "Perfil atualizado!",
@@ -147,14 +127,7 @@ const Profile = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from("addresses" as any)
-        .insert({
-          ...newAddress,
-          user_id: user.id,
-        });
-
-      if (error) throw error;
+      await addressesService.createAddress(newAddress);
 
       toast({
         title: "Endereço adicionado!",
@@ -186,16 +159,11 @@ const Profile = () => {
     }
   };
 
-  const handleDeleteAddress = async (id: string) => {
+  const handleDeleteAddress = async (id: number) => {
     if (!confirm("Deseja realmente excluir este endereço?")) return;
 
     try {
-      const { error } = await supabase
-        .from("addresses" as any)
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
+      await addressesService.deleteAddress(id);
 
       toast({
         title: "Endereço removido",

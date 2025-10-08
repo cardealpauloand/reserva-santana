@@ -9,6 +9,13 @@ async function handleResponse<T>(response: Response): Promise<T> {
   const isJson = contentType && contentType.includes("application/json");
 
   if (!response.ok) {
+    // Handle 401 Unauthorized - clear token and optionally redirect
+    if (response.status === 401) {
+      localStorage.removeItem('auth_token');
+      // Optionally redirect to login - can be handled in AuthContext
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+    }
+
     if (isJson) {
       const errorBody = await response.json().catch(() => ({}));
       const message = errorBody?.message ?? response.statusText;
@@ -30,11 +37,21 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   const trimmedPath = path.replace(/^\//, "");
   const url = `${API_URL}/${trimmedPath}`;
 
+  // Get auth token from localStorage
+  const token = localStorage.getItem('auth_token');
+
+  // Build headers with auth token if available
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...(options.headers ?? {}),
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers ?? {}),
-    },
+    headers,
     ...options,
   });
 

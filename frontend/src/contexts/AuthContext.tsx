@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { authService } from "@/services/auth";
+import type { User, AuthSession } from "@/types/auth";
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
+  session: AuthSession | null;
   isAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
@@ -28,66 +28,57 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<AuthSession | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const checkAdminRole = async (userId: string) => {
+  const loadUser = async () => {
+    const token = authService.getToken();
+
+    if (!token) {
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { data, error } = await supabase
-        .from('user_roles' as any)
-        .select('role')
-        .eq('user_id', userId)
-        .eq('role', 'admin')
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error checking admin role:', error);
-        return false;
-      }
-
-      return !!data;
+      const userData = await authService.getUser();
+      setUser(userData);
+      setSession({ access_token: token });
+      setIsAdmin(userData.is_admin);
     } catch (error) {
-      console.error('Error checking admin role:', error);
-      return false;
+      console.error('Error loading user:', error);
+      // Clear invalid token
+      authService.clearToken();
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        setTimeout(() => {
-          checkAdminRole(session.user.id).then(setIsAdmin).finally(() => setLoading(false));
-        }, 0);
-      } else {
-        setIsAdmin(false);
-        setLoading(false);
-      }
-    });
+    loadUser();
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        checkAdminRole(session.user.id).then(setIsAdmin).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
-    });
+    // Listen for unauthorized events from API
+    const handleUnauthorized = () => {
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+    };
 
-    return () => subscription.unsubscribe();
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await authService.logout();
     setUser(null);
     setSession(null);
     setIsAdmin(false);

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { authService } from "@/services/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,11 +14,13 @@ import { Footer } from "@/components/Footer";
 const authSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }).max(255, { message: "Email muito longo" }),
   password: z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres" }).max(100, { message: "Senha muito longa" }),
+  name: z.string().min(1, { message: "Nome é obrigatório" }).max(255, { message: "Nome muito longo" }).optional(),
 });
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -28,43 +30,28 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const validated = authSchema.parse({ email, password });
-      const redirectUrl = `${window.location.origin}/`;
+      const validated = authSchema.parse({ email, password, name });
 
-      const { error } = await supabase.auth.signUp({
-        email: validated.email,
-        password: validated.password,
-        options: {
-          emailRedirectTo: redirectUrl,
-        },
+      await authService.register(validated.email, validated.password, validated.name || validated.email);
+
+      toast({
+        title: "Sucesso!",
+        description: "Conta criada com sucesso.",
       });
 
-      if (error) {
-        if (error.message.includes("already registered")) {
-          toast({
-            title: "Erro",
-            description: "Este email já está cadastrado. Tente fazer login.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Erro",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
-      } else {
-        toast({
-          title: "Sucesso!",
-          description: "Conta criada com sucesso. Você já pode fazer login.",
-        });
-        navigate("/");
-      }
+      // Reload the page to trigger AuthContext to load user
+      window.location.href = "/";
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
           title: "Erro de validação",
           description: error.errors[0].message,
+          variant: "destructive",
+        });
+      } else if (error instanceof Error) {
+        toast({
+          title: "Erro",
+          description: error.message,
           variant: "destructive",
         });
       }
@@ -80,29 +67,26 @@ const Auth = () => {
     try {
       const validated = authSchema.parse({ email, password });
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email: validated.email,
-        password: validated.password,
+      await authService.login(validated.email, validated.password);
+
+      toast({
+        title: "Bem-vindo!",
+        description: "Login realizado com sucesso.",
       });
 
-      if (error) {
-        toast({
-          title: "Erro",
-          description: "Email ou senha incorretos.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Bem-vindo!",
-          description: "Login realizado com sucesso.",
-        });
-        navigate("/");
-      }
+      // Reload the page to trigger AuthContext to load user
+      window.location.href = "/";
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
           title: "Erro de validação",
           description: error.errors[0].message,
+          variant: "destructive",
+        });
+      } else if (error instanceof Error) {
+        toast({
+          title: "Erro",
+          description: error.message,
           variant: "destructive",
         });
       }
@@ -159,6 +143,17 @@ const Auth = () => {
               </TabsContent>
               <TabsContent value="registro">
                 <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-name">Nome</Label>
+                    <Input
+                      id="signup-name"
+                      type="text"
+                      placeholder="Seu nome"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <Input

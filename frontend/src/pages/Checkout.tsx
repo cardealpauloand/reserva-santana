@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { addressesService } from "@/services/addresses";
+import { ordersService } from "@/services/orders";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, MapPin, Plus, Check, CreditCard, QrCode, Barcode } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -21,20 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { TablesInsert } from "@/integrations/supabase/types";
+import type { Address } from "@/types/address";
 
-interface SavedAddress {
-  id: string;
-  name: string;
-  zip_code: string;
-  street: string;
-  number: string;
-  complement: string | null;
-  neighborhood: string;
-  city: string;
-  state: string;
-  is_default: boolean;
-}
+interface SavedAddress extends Address {}
 
 type PaymentMethod = "pix" | "credit_card" | "boleto";
 
@@ -120,7 +110,7 @@ const Checkout = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string>("new");
+  const [selectedAddressId, setSelectedAddressId] = useState<string | number>("new");
   const [saveNewAddress, setSaveNewAddress] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -166,23 +156,17 @@ const Checkout = () => {
   const loadSavedAddresses = useCallback(async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from("addresses")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("is_default", { ascending: false })
-      .order("created_at", { ascending: false });
+    try {
+      const data = await addressesService.getAddresses();
 
-    if (error) {
+      if (data && data.length > 0) {
+        setSavedAddresses(data);
+        const defaultAddress = data.find((addr) => addr.is_default) || data[0];
+        setSelectedAddressId(defaultAddress.id);
+        fillFormWithAddress(defaultAddress);
+      }
+    } catch (error) {
       console.error("Error loading addresses:", error);
-      return;
-    }
-
-    if (data && data.length > 0) {
-      setSavedAddresses(data);
-      const defaultAddress = data.find((addr) => addr.is_default) || data[0];
-      setSelectedAddressId(defaultAddress.id);
-      fillFormWithAddress(defaultAddress);
     }
   }, [fillFormWithAddress, user]);
 
@@ -199,7 +183,7 @@ const Checkout = () => {
     loadSavedAddresses();
   }, [user, navigate, toast, loadSavedAddresses]);
 
-  const handleAddressSelection = (addressId: string) => {
+  const handleAddressSelection = (addressId: string | number) => {
     setSelectedAddressId(addressId);
     if (addressId === "new") {
       setFormData({
@@ -383,55 +367,43 @@ const Checkout = () => {
     try {
       // Save new address if checkbox is checked and using new address
       if (saveNewAddress && selectedAddressId === "new" && user) {
-        const { error: addressError } = await supabase
-          .from("addresses")
-          .insert({
-            user_id: user.id,
+        try {
+          await addressesService.createAddress({
             name: formData.name,
             zip_code: formData.zipCode,
             street: formData.street,
             number: formData.number,
-            complement: formData.complement || null,
+            complement: formData.complement || "",
             neighborhood: formData.neighborhood,
             city: formData.city,
             state: formData.state,
           });
-
-        if (addressError) {
+        } catch (addressError) {
           console.error("Error saving address:", addressError);
         }
       }
 
-      const orderPayload: TablesInsert<"orders"> = {
-        user_id: user.id,
-        total: cartTotal,
-        status: "pending",
-        shipping_address: formData,
-      };
-
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert(orderPayload)
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-      if (!order) throw new Error("Failed to create order");
-
-      // Create order items
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        product_id: item.id,
-        product_name: item.name,
-        quantity: item.quantity,
-        price_at_purchase: item.price,
-      })) satisfies TablesInsert<"order_items">[];
-
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
+      // Create order with items
+      await ordersService.createOrder({
+        shipping_address: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          zip_code: formData.zipCode,
+          street: formData.street,
+          number: formData.number,
+          complement: formData.complement,
+          neighborhood: formData.neighborhood,
+          city: formData.city,
+          state: formData.state,
+        },
+        items: items.map((item) => ({
+          product_id: item.id,
+          product_name: item.name,
+          quantity: item.quantity,
+          price_at_purchase: item.price,
+        })),
+      });
 
       clearCart();
       
@@ -522,12 +494,12 @@ const Checkout = () => {
                       {savedAddresses.length > 0 && (
                         <div className="space-y-4">
                           <Label className="text-base font-semibold">Escolha o endereço</Label>
-                          <RadioGroup value={selectedAddressId} onValueChange={handleAddressSelection}>
+                          <RadioGroup value={String(selectedAddressId)} onValueChange={(val) => handleAddressSelection(val === "new" ? "new" : Number(val))}>
                             {savedAddresses.map((address) => (
                               <div key={address.id} className="flex items-start space-x-3 space-y-0">
-                                <RadioGroupItem value={address.id} id={address.id} />
+                                <RadioGroupItem value={String(address.id)} id={String(address.id)} />
                                 <Label
-                                  htmlFor={address.id}
+                                  htmlFor={String(address.id)}
                                   className="flex-1 cursor-pointer space-y-1 font-normal"
                                 >
                                   <div className="flex items-center gap-2">

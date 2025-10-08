@@ -1,5 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
+import { apiFetch } from "@/lib/api";
+import type { Order, OrderItem } from "@/types/order";
 
 export const ADMIN_ORDER_STATUS_OPTIONS = [
   { value: "pending", label: "Pendente" },
@@ -43,11 +43,11 @@ export type ShippingAddress = {
   zip_code: string;
 };
 
-export type AdminOrderItem = Tables<"order_items">;
+export type AdminOrderItem = OrderItem;
 
 export type AdminOrder = {
-  id: string;
-  userId: string;
+  id: number;
+  userId: number;
   total: number;
   status: string;
   createdAt: string;
@@ -56,75 +56,35 @@ export type AdminOrder = {
   items: AdminOrderItem[];
 };
 
-type OrderRow = Tables<"orders"> & {
-  order_items?: AdminOrderItem[] | null;
-};
-
-function mapShippingAddress(
-  address: OrderRow["shipping_address"]
-): ShippingAddress | null {
-  if (!address || typeof address !== "object") {
-    return null;
-  }
-
-  const record = address as Record<string, unknown>;
-
+function mapOrder(order: Order): AdminOrder {
   return {
-    name: String(record.name ?? ""),
-    street: String(record.street ?? ""),
-    number: String(record.number ?? ""),
-    complement: (record.complement as string | null | undefined) ?? null,
-    neighborhood: String(record.neighborhood ?? ""),
-    city: String(record.city ?? ""),
-    state: String(record.state ?? ""),
-    zip_code: String(record.zip_code ?? ""),
-  } satisfies ShippingAddress;
-}
-
-function mapOrder(row: OrderRow): AdminOrder {
-  return {
-    id: row.id,
-    userId: row.user_id,
-    total: Number(row.total ?? 0),
-    status: row.status,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    shippingAddress: mapShippingAddress(row.shipping_address),
-    items: row.order_items ?? [],
-  } satisfies AdminOrder;
+    id: order.id,
+    userId: order.user_id,
+    total: order.total,
+    status: order.status,
+    createdAt: order.created_at,
+    updatedAt: order.updated_at,
+    shippingAddress: order.shipping_address,
+    items: order.orderItems || [],
+  };
 }
 
 export async function listAdminOrders(): Promise<AdminOrder[]> {
-  const { data, error } = await supabase
-    .from("orders")
-    .select(
-      `id, user_id, total, status, created_at, updated_at, shipping_address, order_items (id, order_id, product_id, product_name, quantity, price_at_purchase, created_at)`
-    )
-    .order("created_at", { ascending: false });
+  const orders = await apiFetch<Order[]>('/admin/orders', {
+    method: 'GET',
+  });
 
-  if (error) {
-    throw error;
-  }
-
-  return (data ?? []).map(mapOrder);
+  return orders.map(mapOrder);
 }
 
 export async function updateAdminOrderStatus(
-  orderId: string,
+  orderId: number,
   status: string
 ): Promise<AdminOrder> {
-  const { data, error } = await supabase
-    .from("orders")
-    .update({ status })
-    .eq("id", orderId)
-    .select(
-      `id, user_id, total, status, created_at, updated_at, shipping_address, order_items (id, order_id, product_id, product_name, quantity, price_at_purchase, created_at)`
-    )
-    .single();
+  const order = await apiFetch<Order>(`/admin/orders/${orderId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
 
-  if (error) {
-    throw error;
-  }
-
-  return mapOrder(data as OrderRow);
+  return mapOrder(order);
 }

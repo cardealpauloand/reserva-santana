@@ -64,7 +64,7 @@ const AdminOrders = () => {
 
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
 
   const ensureStatusOptions = useCallback((status: string) => {
     if (ADMIN_ORDER_STATUS_OPTIONS.some((option) => option.value === status)) {
@@ -102,7 +102,7 @@ const AdminOrders = () => {
   }, [toast]);
 
   const handleStatusChange = useCallback(
-    async (orderId: string, status: string) => {
+    async (orderId: number, status: string) => {
       setUpdatingOrderId(orderId);
       try {
         const updatedOrder = await updateAdminOrderStatus(orderId, status);
@@ -257,7 +257,7 @@ const AdminOrders = () => {
                       <div className="space-y-1">
                         <CardTitle className="flex items-center gap-2 text-lg">
                           <ClipboardList className="h-5 w-5" />
-                          Pedido #{order.id.slice(0, 8)}
+                          Pedido #{order.id}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground">
                           Criado em {formatOrderDate(order.createdAt)}

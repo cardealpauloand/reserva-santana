@@ -4,37 +4,12 @@ import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { ordersService } from "@/services/orders";
 import { Loader2, Package, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-interface OrderItem {
-  id: string;
-  product_id: number;
-  product_name: string;
-  quantity: number;
-  price_at_purchase: number;
-}
-
-interface Order {
-  id: string;
-  total: number;
-  status: string;
-  created_at: string;
-  shipping_address: {
-    name: string;
-    street: string;
-    number: string;
-    complement?: string;
-    neighborhood: string;
-    city: string;
-    state: string;
-    zip_code: string;
-  };
-  order_items?: OrderItem[];
-}
+import type { Order } from "@/types/order";
 
 const statusLabels: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   pending: { label: "Pendente", variant: "secondary" },
@@ -63,33 +38,8 @@ const Orders = () => {
 
     setLoading(true);
     try {
-      const { data: ordersData, error: ordersError } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (ordersError) throw ordersError;
-
-      if (ordersData) {
-        const ordersWithItems = await Promise.all(
-          ordersData.map(async (order) => {
-            const { data: items, error: itemsError } = await supabase
-              .from("order_items")
-              .select("*")
-              .eq("order_id", order.id);
-
-            if (itemsError) throw itemsError;
-
-            return {
-              ...order,
-              order_items: items || [],
-            };
-          })
-        );
-
-        setOrders(ordersWithItems as any);
-      }
+      const data = await ordersService.getOrders();
+      setOrders(data);
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {
@@ -144,7 +94,7 @@ const Orders = () => {
                     <div>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Package className="h-5 w-5" />
-                        Pedido #{order.id.slice(0, 8)}
+                        Pedido #{order.id}
                       </CardTitle>
                       <p className="text-sm text-muted-foreground mt-1">
                         {format(new Date(order.created_at), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
@@ -165,7 +115,7 @@ const Orders = () => {
                   <div>
                     <h4 className="font-semibold text-sm text-foreground mb-3">Itens do Pedido</h4>
                     <div className="space-y-2">
-                      {order.order_items?.map((item) => (
+                      {order.orderItems?.map((item) => (
                         <div
                           key={item.id}
                           className="flex justify-between items-center py-2 px-3 bg-muted/50 rounded-md"
