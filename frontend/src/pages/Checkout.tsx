@@ -260,6 +260,13 @@ const Checkout = () => {
     [formData.zipCode, items, toast]
   );
 
+  useEffect(() => {
+    const cep = normalizedCep(formData.zipCode);
+    if (cep.length === 8 && items.length > 0) {
+      fetchQuotes(formData.zipCode);
+    }
+  }, [formData.zipCode, fetchQuotes, items.length]);
+
   const handlePaymentMethodChange = (value: PaymentMethod) => {
     setPaymentData((prev) => ({
       ...prev,
@@ -689,10 +696,7 @@ const Checkout = () => {
                             onChange={(e) => {
                               handleChange(e);
                               const value = e.target.value.replace(/\D/g, "");
-                              if (value.length === 8) {
-                                // auto-fetch when CEP complete
-                                fetchQuotes(e.target.value);
-                              } else {
+                              if (value.length !== 8) {
                                 setShippingQuotes(null);
                                 setSelectedShipping(null);
                               }
