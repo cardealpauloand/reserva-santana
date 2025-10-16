@@ -45,6 +45,7 @@ const statusLabels: Record<
     variant: "default" | "secondary" | "destructive" | "outline";
   }
 > = {
+  draft: { label: "Rascunho", variant: "secondary" },
   pending_payment: { label: "Pagamento pendente", variant: "secondary" },
   paid: { label: "Pago", variant: "default" },
   picking: { label: "Separando", variant: "outline" },

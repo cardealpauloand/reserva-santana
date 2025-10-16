@@ -40,19 +40,33 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   // Get auth token from localStorage
   const token = localStorage.getItem('auth_token');
 
-  // Build headers with auth token if available
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...(options.headers ?? {}),
-  };
+  const { headers: optionHeaders, ...fetchOptions } = options;
 
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
+  const headers = new Headers({
+    "Content-Type": "application/json",
+  });
+
+  if (optionHeaders instanceof Headers) {
+    optionHeaders.forEach((value, key) => {
+      headers.set(key, value);
+    });
+  } else if (Array.isArray(optionHeaders)) {
+    optionHeaders.forEach(([key, value]) => {
+      headers.set(key, value);
+    });
+  } else if (optionHeaders) {
+    Object.entries(optionHeaders).forEach(([key, value]) => {
+      headers.set(key, String(value));
+    });
+  }
+
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
   const response = await fetch(url, {
+    ...fetchOptions,
     headers,
-    ...options,
   });
 
   return handleResponse<T>(response);

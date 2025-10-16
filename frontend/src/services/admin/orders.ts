@@ -2,10 +2,9 @@ import { apiFetch } from "@/lib/api";
 import type { Order, OrderItem } from "@/types/order";
 
 export const ADMIN_ORDER_STATUS_OPTIONS = [
-  { value: "pending", label: "Pendente" },
+  { value: "draft", label: "Rascunho" },
   { value: "pending_payment", label: "Pagamento pendente" },
   { value: "paid", label: "Pago" },
-  { value: "processing", label: "Em processamento" },
   { value: "picking", label: "Separando" },
   { value: "shipped", label: "Enviado" },
   { value: "delivered", label: "Entregue" },
@@ -20,10 +19,9 @@ export const ADMIN_ORDER_STATUS_META: Record<
     badgeVariant: "default" | "secondary" | "destructive" | "outline";
   }
 > = {
-  pending: { label: "Pendente", badgeVariant: "secondary" },
+  draft: { label: "Rascunho", badgeVariant: "secondary" },
   pending_payment: { label: "Pagamento pendente", badgeVariant: "secondary" },
   paid: { label: "Pago", badgeVariant: "default" },
-  processing: { label: "Em processamento", badgeVariant: "default" },
   picking: { label: "Separando", badgeVariant: "outline" },
   shipped: { label: "Enviado", badgeVariant: "outline" },
   delivered: { label: "Entregue", badgeVariant: "default" },

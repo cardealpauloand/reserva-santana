@@ -11,12 +11,19 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Order } from "@/types/order";
 
-const statusLabels: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pending: { label: "Pendente", variant: "secondary" },
-  processing: { label: "Em Processamento", variant: "default" },
+const statusLabels: Record<
+  string,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
+  draft: { label: "Rascunho", variant: "secondary" },
+  pending_payment: { label: "Pagamento pendente", variant: "secondary" },
+  paid: { label: "Pago", variant: "default" },
+  picking: { label: "Separando", variant: "outline" },
   shipped: { label: "Enviado", variant: "outline" },
   delivered: { label: "Entregue", variant: "default" },
-  cancelled: { label: "Cancelado", variant: "destructive" },
+  canceled: { label: "Cancelado", variant: "destructive" },
+  cancelled: { label: "Cancelado", variant: "destructive" }, // compat
+  refunded: { label: "Reembolsado", variant: "secondary" },
 };
 
 const Orders = () => {
