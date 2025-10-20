@@ -97,7 +97,7 @@ function mapOrder(order: Order & any): AdminOrder {
     createdAt: String(order.created_at ?? order.createdAt ?? ""),
     updatedAt: String(order.updated_at ?? order.updatedAt ?? ""),
     shippingAddress: mapShippingAddress(
-      order.shipping_address ?? order.shippingAddress
+      order.shipping_address_data ?? order.shipping_address ?? order.shippingAddress
     ),
     items: (order.order_items ?? order.orderItems ?? []) as AdminOrderItem[],
   };

@@ -70,7 +70,12 @@ const Orders = () => {
     setLoading(true);
     try {
       const data = await ordersService.getOrders();
-      setOrders(data);
+      // Map shipping_address_data to shipping_address for compatibility
+      const mappedOrders = data.map((order: any) => ({
+        ...order,
+        shipping_address: order.shipping_address_data ?? order.shipping_address ?? null,
+      }));
+      setOrders(mappedOrders);
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {
