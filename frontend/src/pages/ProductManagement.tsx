@@ -425,6 +425,7 @@ const ProductManagement = () => {
                   type="number"
                   step="0.01"
                   min="0"
+                  validate="number"
                   value={formData.price}
                   onChange={(event) =>
                     setFormData({ ...formData, price: event.target.value })
@@ -454,6 +455,7 @@ const ProductManagement = () => {
                 step="0.1"
                 min="0"
                 max="5"
+                validate="number"
                 value={formData.rating}
                 onChange={(event) =>
                   setFormData({ ...formData, rating: event.target.value })

@@ -26,13 +26,16 @@ class AddressController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'zip_code' => 'required|string|max:10',
+            // CEP must be 8 digits (allow formatted input but validate digits)
+            'zip_code' => ['required', 'string', 'max:10', 'regex:/^\D*(\d\D*){8}$/'],
             'street' => 'required|string|max:255',
-            'number' => 'required|string|max:20',
+            // number requires at least one digit, up to 20 chars (allows complements like 12A)
+            'number' => ['required', 'string', 'max:20', 'regex:/.*\d.*/'],
             'complement' => 'nullable|string|max:255',
             'neighborhood' => 'required|string|max:255',
             'city' => 'required|string|max:255',
-            'state' => 'required|string|max:2',
+            // UF: exactly two letters
+            'state' => ['required', 'string', 'size:2', 'regex:/^[A-Za-z]{2}$/'],
             'is_default' => 'nullable|boolean',
         ]);
 

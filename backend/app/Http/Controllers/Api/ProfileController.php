@@ -36,7 +36,8 @@ class ProfileController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'full_name' => 'sometimes|string|max:255',
-            'phone' => 'nullable|string|max:20',
+            // BR phone ~ 10-11 digits (with or without formatting)
+            'phone' => ['nullable', 'string', 'max:20', 'regex:/^\D*(\d\D*){10,11}$/'],
         ]);
 
         if ($validator->fails()) {

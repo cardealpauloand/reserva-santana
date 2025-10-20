@@ -661,6 +661,7 @@ const Checkout = () => {
                           <Input
                             id="name"
                             name="name"
+                            validate="letters"
                             value={formData.name}
                             onChange={handleChange}
                           />
@@ -671,6 +672,7 @@ const Checkout = () => {
                             id="email"
                             name="email"
                             type="email"
+                            validate="email"
                             value={formData.email}
                             onChange={handleChange}
                           />
@@ -683,6 +685,7 @@ const Checkout = () => {
                           <Input
                             id="phone"
                             name="phone"
+                            validate="phone"
                             value={formData.phone}
                             onChange={handleChange}
                           />
@@ -692,6 +695,7 @@ const Checkout = () => {
                           <Input
                             id="zipCode"
                             name="zipCode"
+                            validate="cep"
                             value={formData.zipCode}
                             onChange={(e) => {
                               handleChange(e);
@@ -721,6 +725,7 @@ const Checkout = () => {
                           <Input
                             id="number"
                             name="number"
+                            validate="integer"
                             value={formData.number}
                             onChange={handleChange}
                           />
@@ -759,9 +764,10 @@ const Checkout = () => {
 
                       <div>
                         <Label htmlFor="state">Estado</Label>
-                        <Input
+                          <Input
                           id="state"
                           name="state"
+                            validate="state"
                           value={formData.state}
                           onChange={handleChange}
                         />

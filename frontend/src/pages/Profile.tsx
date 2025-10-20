@@ -98,6 +98,17 @@ const Profile = () => {
     e.preventDefault();
     if (!user) return;
 
+    // Client-side validation: phone must have 10-11 digits
+    const digits = (profile.phone || "").replace(/\D+/g, "");
+    if (digits.length < 10 || digits.length > 11) {
+      toast({
+        title: "Telefone inválido",
+        description: "Informe um telefone com DDD (10 ou 11 dígitos).",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       await profileService.updateProfile({
@@ -223,6 +234,7 @@ const Profile = () => {
                   <Label htmlFor="full_name">Nome Completo</Label>
                   <Input
                     id="full_name"
+                    validate="letters"
                     value={profile.full_name}
                     onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
                     required
@@ -233,6 +245,7 @@ const Profile = () => {
                   <Label htmlFor="phone">Telefone</Label>
                   <Input
                     id="phone"
+                    validate="phone"
                     value={profile.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                     required
@@ -279,6 +292,7 @@ const Profile = () => {
                     <Label htmlFor="addr_name">Nome do Endereço</Label>
                     <Input
                       id="addr_name"
+                      validate="letters"
                       value={newAddress.name}
                       onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
                       placeholder="Ex: Casa, Trabalho"
@@ -291,6 +305,7 @@ const Profile = () => {
                       <Label htmlFor="zip_code">CEP</Label>
                       <Input
                         id="zip_code"
+                        validate="cep"
                         value={newAddress.zip_code}
                         onChange={(e) => setNewAddress({ ...newAddress, zip_code: e.target.value })}
                         required
@@ -300,6 +315,7 @@ const Profile = () => {
                       <Label htmlFor="number">Número</Label>
                       <Input
                         id="number"
+                        validate="integer"
                         value={newAddress.number}
                         onChange={(e) => setNewAddress({ ...newAddress, number: e.target.value })}
                         required
@@ -341,6 +357,7 @@ const Profile = () => {
                       <Label htmlFor="city">Cidade</Label>
                       <Input
                         id="city"
+                        validate="letters"
                         value={newAddress.city}
                         onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
                         required
@@ -350,6 +367,7 @@ const Profile = () => {
                       <Label htmlFor="state">Estado</Label>
                       <Input
                         id="state"
+                        validate="state"
                         value={newAddress.state}
                         onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
                         required
