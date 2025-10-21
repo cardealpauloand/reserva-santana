@@ -26,9 +26,11 @@ export interface Order {
   user_id: number;
   total: number;
   status: string;
-  shipping_address: ShippingAddress;
+  shipping_address?: ShippingAddress;
+  shipping_address_data?: ShippingAddress;
   created_at: string;
   updated_at: string;
+  order_items?: OrderItem[];
   orderItems?: OrderItem[];
 }
 

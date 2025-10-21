@@ -16,13 +16,20 @@ return new class extends Migration
         Schema::create('warehouses', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name', 100);
-            $table->string('code', 50)->unique();
+            $table->string('code', 50);
             $table->timestampTz('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->timestampTz('updated_at')->default(DB::raw('CURRENT_TIMESTAMP'));
         });
 
         // Create default warehouse
         DB::table('warehouses')->insert([
+            'name' => 'Loja Principal',
+            'code' => 'LOJA-PRINCIPAL',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+         DB::table('warehouses_old')->insert([
             'name' => 'Loja Principal',
             'code' => 'LOJA-PRINCIPAL',
             'created_at' => now(),

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProfileController;
@@ -51,6 +52,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
     // Order routes
     Route::get('orders', [OrderController::class, 'index']);
     Route::post('orders', [OrderController::class, 'store']);
+
+    // Cart routes
+    Route::get('cart', [CartController::class, 'show']);
+    Route::put('cart', [CartController::class, 'sync']);
+    Route::delete('cart', [CartController::class, 'clear']);
 });
 
 // Admin routes

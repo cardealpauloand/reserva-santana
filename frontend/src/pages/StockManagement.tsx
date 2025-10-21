@@ -186,6 +186,7 @@ const StockManagement = () => {
                         id="quantity"
                         type="number"
                         min="1"
+                        validate="integer"
                         value={quantity}
                         onChange={(event) => setQuantity(event.target.value)}
                         required

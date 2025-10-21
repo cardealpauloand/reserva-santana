@@ -13,7 +13,10 @@ import type { Order } from "@/types/order";
 
 const statusLabels: Record<
   string,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  }
 > = {
   draft: { label: "Rascunho", variant: "secondary" },
   pending_payment: { label: "Pagamento pendente", variant: "secondary" },
@@ -24,6 +27,27 @@ const statusLabels: Record<
   canceled: { label: "Cancelado", variant: "destructive" },
   cancelled: { label: "Cancelado", variant: "destructive" }, // compat
   refunded: { label: "Reembolsado", variant: "secondary" },
+};
+
+const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  minimumFractionDigits: 2,
+});
+
+const formatCurrency = (value: number | string | null | undefined) => {
+  if (typeof value === "number") {
+    return currencyFormatter.format(value);
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return currencyFormatter.format(parsed);
+    }
+  }
+
+  return currencyFormatter.format(0);
 };
 
 const Orders = () => {
@@ -46,7 +70,12 @@ const Orders = () => {
     setLoading(true);
     try {
       const data = await ordersService.getOrders();
-      setOrders(data);
+      // Map shipping_address_data to shipping_address for compatibility
+      const mappedOrders = data.map((order: any) => ({
+        ...order,
+        shipping_address: order.shipping_address_data ?? order.shipping_address ?? null,
+      }));
+      setOrders(mappedOrders);
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {
@@ -59,7 +88,7 @@ const Orders = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      
+
       <main className="flex-1 container py-8 px-4 md:px-6">
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
@@ -82,7 +111,8 @@ const Orders = () => {
                 Nenhum pedido encontrado
               </h3>
               <p className="text-muted-foreground text-center mb-6">
-                Você ainda não fez nenhum pedido. Comece a explorar nossos produtos!
+                Você ainda não fez nenhum pedido. Comece a explorar nossos
+                produtos!
               </p>
               <button
                 onClick={() => navigate("/")}
@@ -104,15 +134,23 @@ const Orders = () => {
                         Pedido #{order.id}
                       </CardTitle>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {format(new Date(order.created_at), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+                        {format(
+                          new Date(order.created_at),
+                          "dd 'de' MMMM 'de' yyyy 'às' HH:mm",
+                          { locale: ptBR }
+                        )}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge variant={statusLabels[order.status]?.variant || "default"}>
+                      <Badge
+                        variant={
+                          statusLabels[order.status]?.variant || "default"
+                        }
+                      >
                         {statusLabels[order.status]?.label || order.status}
                       </Badge>
                       <span className="text-lg font-semibold text-foreground">
-                        R$ {order.total.toFixed(2)}
+                        {formatCurrency(order?.total)}
                       </span>
                     </div>
                   </div>
@@ -120,7 +158,9 @@ const Orders = () => {
                 <CardContent className="space-y-4">
                   {/* Order Items */}
                   <div>
-                    <h4 className="font-semibold text-sm text-foreground mb-3">Itens do Pedido</h4>
+                    <h4 className="font-semibold text-sm text-foreground mb-3">
+                      Itens do Pedido
+                    </h4>
                     <div className="space-y-2">
                       {order.orderItems?.map((item) => (
                         <div
@@ -128,13 +168,17 @@ const Orders = () => {
                           className="flex justify-between items-center py-2 px-3 bg-muted/50 rounded-md"
                         >
                           <div className="flex-1">
-                            <p className="font-medium text-foreground">{item.product_name}</p>
+                            <p className="font-medium text-foreground">
+                              {item.product_name}
+                            </p>
                             <p className="text-sm text-muted-foreground">
                               Quantidade: {item.quantity}
                             </p>
                           </div>
                           <p className="font-semibold text-foreground">
-                            R$ {(item.price_at_purchase * item.quantity).toFixed(2)}
+                            {formatCurrency(
+                              item.price_at_purchase * item.quantity
+                            )}
                           </p>
                         </div>
                       ))}
@@ -143,17 +187,25 @@ const Orders = () => {
 
                   {/* Shipping Address */}
                   <div className="pt-4 border-t">
-                    <h4 className="font-semibold text-sm text-foreground mb-2">Endereço de Entrega</h4>
+                    <h4 className="font-semibold text-sm text-foreground mb-2">
+                      Endereço de Entrega
+                    </h4>
                     <div className="text-sm text-muted-foreground space-y-1">
-                      <p className="font-medium text-foreground">{order.shipping_address.name}</p>
-                      <p>
-                        {order.shipping_address.street}, {order.shipping_address.number}
-                        {order.shipping_address.complement && ` - ${order.shipping_address.complement}`}
+                      <p className="font-medium text-foreground">
+                        {order.shipping_address?.name || ""}
                       </p>
                       <p>
-                        {order.shipping_address.neighborhood}, {order.shipping_address.city} - {order.shipping_address.state}
+                        {order.shipping_address?.street || ""},{" "}
+                        {order.shipping_address?.number || ""}
+                        {order.shipping_address?.complement &&
+                          ` - ${order.shipping_address?.complement || ""}`}
                       </p>
-                      <p>CEP: {order.shipping_address.zip_code}</p>
+                      <p>
+                        {order.shipping_address?.neighborhood || ""},{" "}
+                        {order.shipping_address?.city || ""} -{" "}
+                        {order.shipping_address?.state || ""}
+                      </p>
+                      <p>CEP: {order.shipping_address?.zip_code || ""}</p>
                     </div>
                   </div>
                 </CardContent>
