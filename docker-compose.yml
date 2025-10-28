@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:16
+    container_name: reserva_santana_db
+    environment:
+      POSTGRES_DB: reserva_santana
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123123
+    ports:
+      - "5544:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: reserva_santana_backend
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    command: >-
+      sh -lc "composer install --no-interaction --prefer-dist --no-progress
+      && php artisan key:generate --ansi || true
+      && php artisan migrate --force --ansi || true
+      && php artisan serve --host=0.0.0.0 --port=8000"
+
+  frontend:
+    image: node:20
+    container_name: reserva_santana_frontend
+    working_dir: /app
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    command: sh -lc "npm ci || npm i && npm run dev -- --host 0.0.0.0 --port 5173"
+
+volumes:
+  pgdata:
