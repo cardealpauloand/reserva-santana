@@ -154,17 +154,18 @@ const Category = () => {
               {isLoadingCategory ? (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {Array.from({ length: 8 }).map((_, index) => (
-                    <Skeleton
-                      key={index}
-                      className="aspect-[3/4] w-full rounded-xl"
-                    />
+                    <Skeleton key={index} className="aspect-square w-full rounded-xl" />
                   ))}
                 </div>
               ) : filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        fallbackType={categoryDetails?.type ?? categoryDetails?.name}
+                      />
+                    ))}
                 </div>
               ) : (
                 <div className="py-16 text-center">

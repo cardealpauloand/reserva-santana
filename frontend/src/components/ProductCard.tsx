@@ -7,14 +7,34 @@ import type { Product } from "@/types/product";
 import { useCart } from "@/contexts/CartContext";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { AspectRatio } from "@radix-ui/react-aspect-ratio";
 
 interface ProductCardProps {
   product: Product;
+  fallbackType?: string | null;
 }
 
-export const ProductCard = ({ product }: ProductCardProps) => {
+export const ProductCard = ({ product, fallbackType }: ProductCardProps) => {
   const { addItem, items } = useCart();
-  const { name, origin, type, price, originalPrice, rating } = product;
+  const { name, origin, type, price, originalPrice, rating, categories } = product;
+
+  // Prefer explicit product.type, otherwise fall back to the first category's type or name
+  const rawType = type ?? fallbackType ?? categories?.[0]?.type ?? categories?.[0]?.name ?? null;
+
+  // Normalize common category names so "Vinhos Tintos" or "Tintos" -> "Tinto"
+  const displayType = rawType
+    ? (() => {
+        let t = String(rawType).trim();
+        // remove common prefixes like "Vinhos "
+        t = t.replace(/^vinhos\s+/i, "");
+        // naive singularization: if ends with 's' (Portuguese plural), drop it
+        if (t.length > 1 && /s$/i.test(t)) {
+          t = t.slice(0, -1);
+        }
+        // capitalize first letter, leave rest as-is
+        return t.charAt(0).toUpperCase() + t.slice(1);
+      })()
+    : null;
 
   const displayImage =
     product.image ??
@@ -74,7 +94,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       )}
     >
       <Link to={`/produto/${product.id}`}>
-        <div className="relative overflow-hidden bg-muted h-64">
+        {/* Increased min-width only; fixed height keeps image size unchanged */}
+        <div className="min-w-[12rem] md:min-w-[13rem] lg:min-w-[14rem]">
+          <div className="relative overflow-hidden bg-white rounded-md flex items-center justify-center h-40 md:h-48 lg:h-56">
           {discount > 0 && (
             <Badge className="absolute top-3 right-3 z-10 bg-secondary text-secondary-foreground font-bold">
               -{discount}%
@@ -88,24 +110,27 @@ export const ProductCard = ({ product }: ProductCardProps) => {
               Sem estoque
             </Badge>
           )}
-          <img
-            src={displayImage}
-            alt={name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <img
+              src={displayImage}
+              alt={name}
+              loading="lazy"
+              className="w-full h-full object-contain"
+              style={{ objectPosition: "32% 50%" }}
+            />
+            {/* Removed gradient overlay to keep clean white background */}
+          </div>
         </div>
       </Link>
 
       <CardContent className="p-4 space-y-2">
-        {type && (
+        {displayType && (
           <Badge variant="outline" className="text-xs">
-            {type}
+            {displayType}
           </Badge>
         )}
 
         <Link to={`/produto/${product.id}`}>
-          <h3 className="font-semibold text-lg line-clamp-2 text-foreground group-hover:text-primary transition-colors">
+          <h3 title={name} className="font-semibold text-lg line-clamp-3 text-foreground group-hover:text-primary transition-colors">
             {name}
           </h3>
         </Link>
