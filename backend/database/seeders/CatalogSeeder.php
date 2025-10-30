@@ -38,7 +38,7 @@ class CatalogSeeder extends Seeder
                 'premium-gran-reserva' => ['name' => 'Gran Reserva', 'type' => 'Premium'],
                 'premium-importados' => ['name' => 'Importados Premium', 'type' => 'Premium'],
                 'kit-degustacao' => ['name' => 'Kit Degustação', 'type' => 'Kit'],
-                'kit-presente' => ['name' => 'Kit Presente', 'type' => 'Kit'],
+                'kit-refrescante' => ['name' => 'Kit Refrescante', 'type' => 'Kit'],
                 'kit-harmonizacao' => ['name' => 'Kit Harmonização', 'type' => 'Kit'],
                 'kit-iniciante' => ['name' => 'Kit Iniciante', 'type' => 'Kit'],
             ];
@@ -66,7 +66,7 @@ class CatalogSeeder extends Seeder
                     'temperature' => '16-18°C',
                     'description' => 'Safra premiada com notas complexas de frutas vermelhas maduras, taninos sedosos e final prolongado.',
                     'image_url' => 'https://cdn.awsli.com.br/600x1000/2574/2574994/produto/2113151299951fc4074.jpg',
-                    'categories' => ['tintos', 'premium-reserva', 'premium-raros'],
+                    'categories' => ['tintos', 'premium-reserva', 'premium-raros'/*, 'kit-presente'*/],
                 ],
                 [
                     'name' => 'Chardonnay Reserve 2020',
@@ -203,6 +203,32 @@ class CatalogSeeder extends Seeder
                     'image_url' => 'https://cdn.awsli.com.br/600x1000/2574/2574994/produto/2113151299951fc4074.jpg',
                     'categories' => ['brancos', 'premium-importados'],
                 ],
+
+
+
+
+
+
+
+
+
+                
+                [
+                    'name' => 'Kit 3 Vinhos Refrescantes + Bolsa Exclusiva',
+                    'slug' => 'kit-3-vinhos-refrescantes-bolsa-exclusiva',
+                    'origin' => 'Vários países',
+                    'type' => 'Vários tipos',
+                    'price' => '349.60',
+                    'original_price' => '469.99',
+                    'rating' => 5,
+                    'volume' => '750ml',
+                    'alcohol' => '12%',
+                    'temperature' => '8-10°C',
+                    'description' => 'Selecionamos neste kit Gustav, Tanggier e Epic Wines, ideais para harmonizar com pratos leves, e uma bolsa para suas garrafas.',
+                    'image_url' => 'https://res.cloudinary.com/evino/image/upload/q_auto:good,fl_progressive:steep,f_auto,dpr_2.0,h_434/v1/products/0278791-standing-front.png',
+                    'categories' => ['brancos', 'kit-refrescante', 'roses', 'espumantes'],
+                ],
+                
             ];
 
             foreach ($products as $productData) {
