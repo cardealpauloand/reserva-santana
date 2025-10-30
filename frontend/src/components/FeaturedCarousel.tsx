@@ -18,7 +18,7 @@ const LoadingCarousel = () => (
           className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
         >
           <div className="h-full space-y-4">
-            <Skeleton className="w-full aspect-[3/4] rounded-lg" />
+            <Skeleton className="w-full aspect-square rounded-lg" />
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
             <Skeleton className="h-6 w-24" />
@@ -68,7 +68,7 @@ export const FeaturedCarousel = () => {
               {featuredProducts.map((product) => (
                 <CarouselItem
                   key={product.id}
-                  className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+                  className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 2xl:basis-1/5"
                 >
                   <ProductCard product={product} />
                 </CarouselItem>

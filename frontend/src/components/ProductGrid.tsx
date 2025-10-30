@@ -8,7 +8,7 @@ const LoadingGrid = () => (
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
     {Array.from({ length: 8 }).map((_, index) => (
       <div key={index} className="space-y-4">
-        <Skeleton className="w-full aspect-[3/4] rounded-lg" />
+        <Skeleton className="w-full aspect-square rounded-lg" />
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-4 w-1/2" />
         <Skeleton className="h-6 w-24" />
@@ -87,7 +87,7 @@ export const ProductGrid = () => {
             Nenhum produto encontrado no momento.
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

@@ -363,7 +363,7 @@ const ProductManagement = () => {
       </main>
 
       <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto overscroll-contain">
           <DialogHeader>
             <DialogTitle>
               {editingProduct ? "Editar Produto" : "Novo Produto"}
@@ -473,6 +473,20 @@ const ProductManagement = () => {
                 }
                 placeholder="https://exemplo.com/imagem.jpg"
               />
+              {formData.imageUrl && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">Pré-visualização (contain, fundo branco)</p>
+                  <div className="bg-white rounded-md overflow-hidden flex items-center justify-center min-w-[12rem] md:min-w-[13rem] lg:min-w-[14rem] h-40 md:h-48 lg:h-56">
+                    <img
+                      src={formData.imageUrl}
+                      alt="Pré-visualização da imagem do produto"
+                      className="w-full h-full object-contain"
+                      style={{ objectPosition: "32% 50%" }}
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid gap-2">

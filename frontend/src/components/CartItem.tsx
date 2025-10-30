@@ -17,11 +17,14 @@ export const CartItem = ({ item }: CartItemProps) => {
 
   return (
     <div className="flex gap-4 py-4 border-b border-border">
-      <img
-        src={item.image ?? item.primaryImage?.url ?? "https://placehold.co/200x200?text=Vinho"}
-        alt={item.name}
-        className="w-24 h-24 object-cover rounded-lg"
-      />
+      <div className="w-24 h-24 bg-white rounded-lg overflow-hidden flex items-center justify-center">
+        <img
+          src={item.image ?? item.primaryImage?.url ?? "https://placehold.co/200x200?text=Vinho"}
+          alt={item.name}
+          className="w-full h-full object-contain p-2"
+          loading="lazy"
+        />
+      </div>
       <div className="flex-1 flex flex-col justify-between">
         <div>
           <h3 className="font-semibold text-foreground">{item.name}</h3>

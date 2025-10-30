@@ -129,6 +129,8 @@ const ProductDetail = () => {
     });
   };
 
+  
+
   if (!Number.isFinite(productId) || (isError && error.message.toLowerCase().includes("not"))) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -171,7 +173,7 @@ const ProductDetail = () => {
         <Header />
         <main className="flex-1 container px-4 md:px-6 py-16">
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-            <Skeleton className="aspect-[3/4] w-full rounded-xl" />
+            <Skeleton className="h-64 md:h-80 lg:h-96 w-full rounded-xl" />
             <div className="space-y-6">
               <Skeleton className="h-10 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
@@ -230,11 +232,13 @@ const ProductDetail = () => {
 
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
             <div className="space-y-4">
-              <div className="aspect-[3/4] rounded-lg overflow-hidden bg-accent">
+              <div
+                className="rounded-lg overflow-hidden bg-white flex items-center justify-center"
+              >
                 <img
                   src={displayImage}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="max-h-72 md:max-h-96 lg:max-h-[28rem] w-auto h-auto max-w-full object-contain p-2"
                 />
               </div>
             </div>
@@ -383,6 +387,7 @@ const ProductDetail = () => {
           )}
         </div>
       </main>
+      
       <Footer />
     </div>
   );
