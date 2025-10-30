@@ -94,9 +94,9 @@ export const ProductCard = ({ product, fallbackType }: ProductCardProps) => {
       )}
     >
       <Link to={`/produto/${product.id}`}>
-        {/* Increased min-width only; fixed height keeps image size unchanged */}
-        <div className="min-w-[12rem] md:min-w-[13rem] lg:min-w-[14rem]">
-          <div className="relative overflow-hidden bg-white rounded-md flex items-center justify-center h-40 md:h-48 lg:h-56">
+        {/* Image container with proper padding to show full image */}
+        <div className="w-full">
+          <div className="relative bg-white rounded-md flex items-center justify-center h-36 md:h-40 lg:h-44 p-2">
           {discount > 0 && (
             <Badge className="absolute top-3 right-3 z-10 bg-secondary text-secondary-foreground font-bold">
               -{discount}%
@@ -115,7 +115,6 @@ export const ProductCard = ({ product, fallbackType }: ProductCardProps) => {
               alt={name}
               loading="lazy"
               className="w-full h-full object-contain"
-              style={{ objectPosition: "32% 50%" }}
             />
             {/* Removed gradient overlay to keep clean white background */}
           </div>
@@ -130,7 +129,7 @@ export const ProductCard = ({ product, fallbackType }: ProductCardProps) => {
         )}
 
         <Link to={`/produto/${product.id}`}>
-          <h3 title={name} className="font-semibold text-lg line-clamp-3 text-foreground group-hover:text-primary transition-colors">
+          <h3 title={name} className="font-semibold text-base line-clamp-2 text-foreground group-hover:text-primary transition-colors">
             {name}
           </h3>
         </Link>
@@ -156,14 +155,14 @@ export const ProductCard = ({ product, fallbackType }: ProductCardProps) => {
         )}
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 flex items-center justify-between">
-        <div className="flex flex-col">
+      <CardFooter className="p-4 pt-0 flex items-center justify-between gap-3">
+        <div className="flex flex-col min-w-0 flex-1">
           {hasOriginalPrice && (
             <span className="text-sm text-muted-foreground line-through">
               R$ {originalPrice.toFixed(2)}
             </span>
           )}
-          <span className="text-2xl font-bold text-primary">
+          <span className="text-xl md:text-2xl font-bold text-primary break-words">
             R$ {price.toFixed(2)}
           </span>
           <span
@@ -180,7 +179,7 @@ export const ProductCard = ({ product, fallbackType }: ProductCardProps) => {
           size="icon"
           variant="default"
           onClick={handleAddToCart}
-          className="h-10 w-10"
+          className="h-10 w-10 flex-shrink-0"
           disabled={disableAddButton}
         >
           <ShoppingCart className="h-4 w-4" />
