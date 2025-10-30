@@ -1,0 +1,1 @@
+-- no-op: database is created by POSTGRES_DB in docker-compose
