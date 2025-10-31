@@ -69,7 +69,7 @@ export const HeroCarousel = () => {
                     className="absolute inset-0 bg-cover bg-center"
                     style={{ backgroundImage: `url(${slide.image})` }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/70 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/35 to-transparent" />
                   </div>
                   
                   <div className="relative container px-4 md:px-6 py-24 md:py-32">

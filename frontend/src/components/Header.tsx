@@ -76,14 +76,14 @@ const menuCategories = {
     icon: Gift,
     items: [
       {
-        name: "Kit Degustação",
-        href: "/categoria/kit-degustacao",
-        description: "Experimente nossa seleção",
+        name: "Kit Barolo",
+        href: "/categoria/kit-barolo",
+        description: " O Barolo é um dos vinhos italianos mais renomados",
       },
       {
-        name: "Kit Presente",
-        href: "/categoria/kit-presente",
-        description: "Presentes especiais para amantes de vinho",
+        name: "Kit Best Sellers",
+        href: "/categoria/kit-best-sellers",
+        description: "Explore nossos mais vendidos",
       },
       {
         name: "Kit Harmonização",
@@ -91,9 +91,9 @@ const menuCategories = {
         description: "Vinhos para harmonizar",
       },
       {
-        name: "Kit Iniciante",
-        href: "/categoria/kit-iniciante",
-        description: "Comece sua jornada no mundo dos vinhos",
+        name: "Kit Uvas Icônicas",
+        href: "/categoria/kit-uvas-iconicas",
+        description: "Os sabores clássicos que se tornaram ícones.",
       },
     ],
   },
