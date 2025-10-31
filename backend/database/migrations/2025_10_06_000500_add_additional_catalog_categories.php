@@ -28,20 +28,20 @@ return new class extends Migration {
             'name' => 'Importados Premium',
             'type' => 'Premium',
         ],
-        'kit-degustacao' => [
-            'name' => 'Kit Degustação',
+        'kit-barolo' => [
+            'name' => 'Kit Barolo',
             'type' => 'Kit',
         ],
-        'kit-presente' => [
-            'name' => 'Kit Presente',
+        'kit-best-sellers' => [
+            'name' => 'Kit Best Sellers',
             'type' => 'Kit',
         ],
         'kit-harmonizacao' => [
             'name' => 'Kit Harmonização',
             'type' => 'Kit',
         ],
-        'kit-iniciante' => [
-            'name' => 'Kit Iniciante',
+        'kit-uvas-iconicas' => [
+            'name' => 'Kit Uvas Icônicas',
             'type' => 'Kit',
         ],
     ];
