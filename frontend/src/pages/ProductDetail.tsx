@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
 import { ProductCard } from "@/components/ProductCard";
-import { Star, Plus, Minus, ArrowLeft, Wine, Thermometer, Percent } from "lucide-react";
+import { Star, Plus, Minus, ArrowLeft, Wine, Thermometer, Percent, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +18,8 @@ const ProductDetail = () => {
   const { addItem, items } = useCart();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [transformOrigin, setTransformOrigin] = useState<string>("50% 50%");
 
   const {
     data: product,
@@ -129,6 +131,22 @@ const ProductDetail = () => {
     });
   };
 
+  const handleImageClick = () => {
+    setIsZoomed((z) => !z);
+  };
+
+  const handleImageMouseMove: React.MouseEventHandler<HTMLDivElement> = (e) => {
+    if (!isZoomed) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setTransformOrigin(`${x}% ${y}%`);
+  };
+
+  const handleImageMouseLeave = () => {
+    setIsZoomed(false);
+  };
+
   
 
   if (!Number.isFinite(productId) || (isError && error.message.toLowerCase().includes("not"))) {
@@ -233,13 +251,27 @@ const ProductDetail = () => {
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
             <div className="space-y-4">
               <div
-                className="rounded-lg overflow-hidden bg-white flex items-center justify-center"
+                className="relative rounded-lg overflow-hidden bg-white flex items-center justify-center cursor-zoom-in"
+                onClick={handleImageClick}
+                onMouseMove={handleImageMouseMove}
+                onMouseLeave={handleImageMouseLeave}
               >
                 <img
                   src={displayImage}
                   alt={product.name}
-                  className="max-h-72 md:max-h-96 lg:max-h-[28rem] w-auto h-auto max-w-full object-contain p-2"
+                  style={{
+                    transformOrigin: transformOrigin,
+                    transform: isZoomed ? "scale(2.5)" : "scale(1)",
+                  }}
+                  className="transition-transform duration-150 ease-out max-h-72 md:max-h-96 lg:max-h-[28rem] w-auto h-auto max-w-full object-contain p-2 select-none pointer-events-none"
+                  draggable={false}
                 />
+                {/* Ícone de lupa seguindo o cursor */}
+                {!isZoomed && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <Search className="h-8 w-8 text-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                )}
               </div>
             </div>
 

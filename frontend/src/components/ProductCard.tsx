@@ -89,14 +89,14 @@ export const ProductCard = ({ product, fallbackType }: ProductCardProps) => {
   return (
     <Card
       className={cn(
-        "group overflow-hidden transition-all duration-300 border-border/50 hover:shadow-lg",
+        "group overflow-hidden transition-all duration-300 border-border/50 hover:shadow-lg h-full flex flex-col",
         isOutOfStock && "opacity-70 grayscale"
       )}
     >
       <Link to={`/produto/${product.id}`}>
         {/* Image container with proper padding to show full image */}
         <div className="w-full">
-          <div className="relative bg-white rounded-md flex items-center justify-center h-36 md:h-40 lg:h-44 p-2">
+          <div className="relative bg-white rounded-md flex items-center justify-center h-48 p-2">
           {discount > 0 && (
             <Badge className="absolute top-3 right-3 z-10 bg-secondary text-secondary-foreground font-bold">
               -{discount}%
@@ -114,14 +114,14 @@ export const ProductCard = ({ product, fallbackType }: ProductCardProps) => {
               src={displayImage}
               alt={name}
               loading="lazy"
-              className="w-full h-full object-contain"
+              className="max-h-full w-auto object-contain"
             />
             {/* Removed gradient overlay to keep clean white background */}
           </div>
         </div>
       </Link>
 
-      <CardContent className="p-4 space-y-2">
+      <CardContent className="p-4 space-y-2 flex-1">
         {displayType && (
           <Badge variant="outline" className="text-xs">
             {displayType}
@@ -155,7 +155,7 @@ export const ProductCard = ({ product, fallbackType }: ProductCardProps) => {
         )}
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 flex items-center justify-between gap-3">
+      <CardFooter className="p-4 pt-0 flex items-center justify-between gap-3 mt-auto">
         <div className="flex flex-col min-w-0 flex-1">
           {hasOriginalPrice && (
             <span className="text-sm text-muted-foreground line-through">
