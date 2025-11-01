@@ -91,7 +91,7 @@ const Category = () => {
       <main className="flex-1">
         <section className="container px-4 md:px-6 py-16 ">
           <div className="flex flex-col gap-8 md:flex-row ">
-            <aside className="md:w-64 md:flex-shrink-0">
+            <aside className="md:w-64 md:flex-shrink-0 md:sticky md:top-24 self-start">
               <div className="space-y-4 rounded-xl border bg-card p-4 shadow-sm">
                 <h2 className="text-lg font-semibold text-foreground">
                   Categorias
