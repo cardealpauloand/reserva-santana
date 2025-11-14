@@ -5,12 +5,9 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+  
     public function up(): void
     {
-        // Create trigger function that records product price changes
         DB::unprepared("
             CREATE OR REPLACE FUNCTION audit_product_price_change()
             RETURNS TRIGGER AS $$
@@ -35,9 +32,7 @@ return new class extends Migration
         ");
     }
 
-    /**
-     * Reverse the migrations.
-     */
+   
     public function down(): void
     {
         DB::unprepared("
