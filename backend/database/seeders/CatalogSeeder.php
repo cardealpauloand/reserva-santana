@@ -90,7 +90,7 @@ class CatalogSeeder extends Seeder
 
                 [
                     'name' => 'Don Simon Seleccion Tempranillo',
-                    'slug' => 'chateau-margaux-2015',
+                    'slug' => 'don-simon-seleccion-tempranillo',
                     'origin' => 'Bordeaux, França',
                     'type' => 'Tinto',
                     'price' => '69.90',
@@ -120,7 +120,7 @@ class CatalogSeeder extends Seeder
                 ],
                 [
                     'name' => 'Alicia en el Pais de Las Uvas Bobal Rosado Pálido',
-                    'slug' => 'provence-rose-premium',
+                    'slug' => 'alicia-en-el-pais-de-las-uvas-bobal-rosado-palido',
                     'origin' => 'Provence, França',
                     'type' => 'Rosé',
                     'price' => '89.90',
@@ -135,7 +135,7 @@ class CatalogSeeder extends Seeder
                 ],
                 [
                     'name' => 'Tanggier Brut',
-                    'slug' => 'champagne-veuve-clicquot',
+                    'slug' => 'tanggier-brut',
                     'origin' => 'Champagne, França',
                     'type' => 'Espumante',
                     'price' => '89.90',
@@ -167,7 +167,7 @@ class CatalogSeeder extends Seeder
 
                 [
                     'name' => 'Gran Maestro Primitivo di Manduria DOC 2022',
-                    'slug' => 'malbec-gran-reserva',
+                    'slug' => 'gran-maestro-primitivo-di-manduria-doc-2022',
                     'origin' => 'Mendoza, Argentina',
                     'type' => 'Tinto',
                     'price' => '209.90',
@@ -182,7 +182,7 @@ class CatalogSeeder extends Seeder
                 ],
                 [
                     'name' => 'Lupo Meraviglia Uno di Uno Vermentino Puglia IGT 2024',
-                    'slug' => 'sauvignon-blanc-estate',
+                    'slug' => 'lupo-meraviglia-uno-di-uno-vermentino-puglia-igt-2024',
                     'origin' => 'Marlborough, Nova Zelândia',
                     'type' => 'Branco',
                     'price' => '179.78',
@@ -197,7 +197,7 @@ class CatalogSeeder extends Seeder
                 ],
                 [
                     'name' => "Biscardo Rosapasso Originale Pinot Nero Veneto IGT 2024",
-                    'slug' => 'rose-danjou',
+                    'slug' => 'biscardo-rosapasso-originale-pinot-nero-veneto-igt-2024',
                     'origin' => 'Loire, França',
                     'type' => 'Rosé',
                     'price' => '179.90',
@@ -212,7 +212,7 @@ class CatalogSeeder extends Seeder
                 ],
                 [
                     'name' => 'Chandon Riche Demi-Sec 750mL',
-                    'slug' => 'prosecco-doc-brut',
+                    'slug' => 'chandon-riche-demi-sec',
                     'origin' => 'Veneto, Itália',
                     'type' => 'Espumante',
                     'price' => '119.90',
@@ -227,7 +227,7 @@ class CatalogSeeder extends Seeder
                 ],
                 [
                     'name' => 'Infinitum Sangiovese Rubicone IGT',
-                    'slug' => 'cabernet-sauvignon-reserve',
+                    'slug' => 'infinitum-sangiovese-rubicone-igt',
                     'origin' => 'Napa Valley, EUA',
                     'type' => 'Tinto',
                     'price' => '219.90',
@@ -590,13 +590,7 @@ class CatalogSeeder extends Seeder
                     'image_url' => 'https://res.cloudinary.com/evino/image/upload/q_auto:good,fl_progressive:steep,f_auto,dpr_2.0,h_434/v1/products/0281881-standing-front.png',
                     'categories' => ['kit-primitivo','tintos'],
                 ],
-
-
-
-                /*kits tintos*/
-
-                
-
+             
                 /*kits barolo*/
 
                 [
