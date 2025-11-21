@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -15,25 +16,42 @@ class DashboardController extends Controller
     /**
      * Return an overview of admin dashboard metrics.
      */
-    public function __invoke(): JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
-        $now = Carbon::now();
-        $startOfMonth = $now->copy()->startOfMonth();
-        $startOfPreviousMonth = $startOfMonth->copy()->subMonth();
-        $endOfPreviousMonth = $startOfMonth->copy()->subSecond();
+        $ranges = $this->resolveDateRanges($request);
+        $currentRange = $ranges['current'];
+        $previousRange = $ranges['previous'];
+        $periodLabel = $ranges['label'];
+        $comparisonLabel = $ranges['comparison_label'];
 
-        $ordersData = $this->resolveOrderMetrics($startOfMonth, $now, $startOfPreviousMonth, $endOfPreviousMonth);
-        $productsData = $this->resolveProductMetrics($startOfMonth, $now, $startOfPreviousMonth, $endOfPreviousMonth);
-        $usersData = $this->resolveUserMetrics($startOfMonth, $now, $startOfPreviousMonth, $endOfPreviousMonth);
+        $ordersData = $this->resolveOrderMetrics(
+            $currentRange['start'],
+            $currentRange['end'],
+            $previousRange['start'],
+            $previousRange['end']
+        );
+        $productsData = $this->resolveProductMetrics(
+            $currentRange['start'],
+            $currentRange['end'],
+            $previousRange['start'],
+            $previousRange['end']
+        );
+        $usersData = $this->resolveUserMetrics(
+            $currentRange['start'],
+            $currentRange['end'],
+            $previousRange['start'],
+            $previousRange['end']
+        );
 
         $stats = [
             $this->buildStat(
                 key: 'orders',
                 title: 'Total de Pedidos',
-                total: $ordersData['total_orders'],
-                currentPeriodTotal: $ordersData['current_month_orders'],
-                previousPeriodTotal: $ordersData['previous_month_orders'],
-                periodLabel: 'Mês atual',
+                total: $ordersData['current_orders'],
+                currentPeriodTotal: $ordersData['current_orders'],
+                previousPeriodTotal: $ordersData['previous_orders'],
+                periodLabel: $periodLabel,
+                comparisonLabel: $comparisonLabel,
                 format: 'number',
                 extra: [
                     'awaiting_fulfillment' => $ordersData['awaiting_fulfillment'],
@@ -42,10 +60,11 @@ class DashboardController extends Controller
             $this->buildStat(
                 key: 'products',
                 title: 'Produtos',
-                total: $productsData['total_products'],
-                currentPeriodTotal: $productsData['current_month_created'],
-                previousPeriodTotal: $productsData['previous_month_created'],
-                periodLabel: 'Novos produtos no mês',
+                total: $productsData['current_products'],
+                currentPeriodTotal: $productsData['current_products'],
+                previousPeriodTotal: $productsData['previous_products'],
+                periodLabel: $periodLabel,
+                comparisonLabel: $comparisonLabel,
                 format: 'number',
                 extra: [
                     'category_count' => $productsData['category_count'],
@@ -54,20 +73,22 @@ class DashboardController extends Controller
             ),
             $this->buildStat(
                 key: 'users',
-                title: 'Usuários',
-                total: $usersData['total_users'],
-                currentPeriodTotal: $usersData['current_month_users'],
-                previousPeriodTotal: $usersData['previous_month_users'],
-                periodLabel: 'Novos usuários no mês',
+                title: 'Usuários Novos',
+                total: $usersData['current_users'],
+                currentPeriodTotal: $usersData['current_users'],
+                previousPeriodTotal: $usersData['previous_users'],
+                periodLabel: $periodLabel,
+                comparisonLabel: $comparisonLabel,
                 format: 'number',
             ),
             $this->buildStat(
                 key: 'revenue',
                 title: 'Receita',
-                total: $ordersData['total_revenue'],
-                currentPeriodTotal: $ordersData['current_month_revenue'],
-                previousPeriodTotal: $ordersData['previous_month_revenue'],
-                periodLabel: 'Receita do mês',
+                total: $ordersData['current_revenue'],
+                currentPeriodTotal: $ordersData['current_revenue'],
+                previousPeriodTotal: $ordersData['previous_revenue'],
+                periodLabel: $periodLabel,
+                comparisonLabel: $comparisonLabel,
                 format: 'currency',
                 extra: [
                     'average_order_value' => $ordersData['average_order_value'],
@@ -80,12 +101,193 @@ class DashboardController extends Controller
                 'stats' => $stats,
                 'recent_orders' => $ordersData['recent_orders'],
                 'top_products' => $ordersData['top_products'],
+                'top_products_comparison' => $ordersData['top_products_comparison'],
                 'inventory' => [
                     'category_count' => $productsData['category_count'],
                     'low_stock_count' => $productsData['low_stock_count'],
                 ],
+                'selected_range' => [
+                    'start' => $currentRange['start']->toDateString(),
+                    'end' => $currentRange['end']->toDateString(),
+                    'label' => $periodLabel,
+                    'days' => $ranges['current_days'],
+                ],
+                'comparison_range' => [
+                    'start' => $previousRange['start']->toDateString(),
+                    'end' => $previousRange['end']->toDateString(),
+                    'label' => $comparisonLabel,
+                    'source' => $ranges['comparison_source'],
+                    'days' => $ranges['comparison_days'],
+                ],
+                'comparison_note' => $ranges['comparison_note'],
             ],
         ]);
+    }
+
+    /**
+     * Resolve the current and previous date ranges based on request filters.
+     *
+     * @return array{
+     *     current: array{start: Carbon, end: Carbon},
+     *     previous: array{start: Carbon, end: Carbon},
+     *     label: string,
+     *     comparison_label: string,
+     *     comparison_note: string,
+     *     comparison_source: string,
+     *     current_days: int,
+     *     comparison_days: int
+     * }
+     */
+    private function resolveDateRanges(Request $request): array
+    {
+        $now = Carbon::now()->endOfDay();
+        $defaultStart = $now->copy()->startOfMonth();
+
+        try {
+            $startDate = $request->query('start_date');
+            $currentStart = $startDate !== null
+                ? Carbon::parse($startDate)->startOfDay()
+                : $defaultStart;
+        } catch (\Throwable $exception) {
+            $currentStart = $defaultStart;
+        }
+
+        try {
+            $endDate = $request->query('end_date');
+            $currentEnd = $endDate !== null
+                ? Carbon::parse($endDate)->endOfDay()
+                : $now;
+        } catch (\Throwable $exception) {
+            $currentEnd = $now;
+        }
+
+        if ($currentStart->greaterThan($currentEnd)) {
+            [$currentStart, $currentEnd] = [$currentEnd->copy()->startOfDay(), $currentStart->copy()->endOfDay()];
+        }
+
+        $currentDays = max(1, $currentStart->diffInDays($currentEnd) + 1);
+
+        $comparisonSource = 'recent_days';
+        $comparisonStart = null;
+        $comparisonEnd = null;
+        $comparisonDays = $currentDays;
+
+        $manualComparison = $this->resolveManualComparisonRange($request);
+
+        if ($manualComparison !== null) {
+            $comparisonSource = 'manual';
+            $comparisonStart = $manualComparison['start'];
+            $comparisonEnd = $manualComparison['end'];
+            $comparisonDays = $manualComparison['days'];
+        }
+
+        if ($comparisonStart === null || $comparisonEnd === null) {
+            $recentComparisonEnd = $now->copy();
+            $recentComparisonStart = $recentComparisonEnd->copy()->subDays($currentDays - 1)->startOfDay();
+
+            $comparisonStart = $recentComparisonStart;
+            $comparisonEnd = $recentComparisonEnd;
+
+            $currentMatchesRecentWindow = $currentStart->equalTo($recentComparisonStart)
+                && $currentEnd->equalTo($recentComparisonEnd);
+            $currentExtendsBeyondRecentWindow = $currentEnd->greaterThan($recentComparisonEnd);
+
+            if ($currentMatchesRecentWindow || $currentExtendsBeyondRecentWindow) {
+                $comparisonSource = 'prior_block';
+                $comparisonEnd = $currentStart->copy()->subSecond();
+                $comparisonStart = $comparisonEnd->copy()->subDays($currentDays - 1)->startOfDay();
+            }
+        }
+
+        $label = sprintf(
+            '%s - %s',
+            $currentStart->copy()->format('d/m/Y'),
+            $currentEnd->copy()->format('d/m/Y')
+        );
+
+        if ($comparisonSource === 'manual') {
+            $comparisonLabel = sprintf(
+                'Período comparativo (%s - %s)',
+                $comparisonStart->copy()->format('d/m/Y'),
+                $comparisonEnd->copy()->format('d/m/Y')
+            );
+            $comparisonNote = sprintf(
+                'Comparando com o período selecionado manualmente (%s - %s).',
+                $comparisonStart->copy()->format('d/m/Y'),
+                $comparisonEnd->copy()->format('d/m/Y')
+            );
+        } elseif ($comparisonSource === 'recent_days') {
+            $comparisonLabel = sprintf(
+                'Últimos %d dias (%s - %s)',
+                $currentDays,
+                $comparisonStart->copy()->format('d/m/Y'),
+                $comparisonEnd->copy()->format('d/m/Y')
+            );
+            $comparisonNote = sprintf(
+                'Comparando com os últimos %d dias (%s - %s).',
+                $currentDays,
+                $comparisonStart->copy()->format('d/m/Y'),
+                $comparisonEnd->copy()->format('d/m/Y')
+            );
+        } else {
+            $comparisonLabel = sprintf(
+                '%d dias anteriores (%s - %s)',
+                $currentDays,
+                $comparisonStart->copy()->format('d/m/Y'),
+                $comparisonEnd->copy()->format('d/m/Y')
+            );
+            $comparisonNote = sprintf(
+                'Comparando com os %d dias anteriores ao período selecionado (%s - %s, sem contar os dias atuais).',
+                $currentDays,
+                $comparisonStart->copy()->format('d/m/Y'),
+                $comparisonEnd->copy()->format('d/m/Y')
+            );
+        }
+
+        return [
+            'current' => ['start' => $currentStart, 'end' => $currentEnd],
+            'previous' => ['start' => $comparisonStart, 'end' => $comparisonEnd],
+            'label' => $label,
+            'comparison_label' => $comparisonLabel,
+            'comparison_note' => $comparisonNote,
+            'comparison_source' => $comparisonSource,
+            'current_days' => $currentDays,
+            'comparison_days' => $comparisonDays,
+        ];
+    }
+
+    /**
+     * Resolve manual comparison range if all parameters are valid.
+     *
+     * @return array{start: Carbon, end: Carbon, days: int}|null
+     */
+    private function resolveManualComparisonRange(Request $request): ?array
+    {
+        $startInput = $request->query('comparison_start_date');
+        $endInput = $request->query('comparison_end_date');
+
+        if ($startInput === null || $endInput === null) {
+            return null;
+        }
+
+        try {
+            $start = Carbon::parse($startInput)->startOfDay();
+            $end = Carbon::parse($endInput)->endOfDay();
+        } catch (\Throwable $exception) {
+            return null;
+        }
+
+        if ($start->greaterThan($end)) {
+            [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+        }
+
+        $days = max(1, $start->diffInDays($end) + 1);
+
+        return [
+            'start' => $start,
+            'end' => $end,
+            'days' => $days,
+        ];
     }
 
     /**
@@ -101,6 +303,7 @@ class DashboardController extends Controller
         float|int $currentPeriodTotal,
         float|int $previousPeriodTotal,
         string $periodLabel,
+        string $comparisonLabel,
         string $format = 'number',
         array $extra = []
     ): array {
@@ -121,6 +324,7 @@ class DashboardController extends Controller
                 ? $this->formatCurrency($previousPeriodTotal)
                 : (int) round($previousPeriodTotal),
             'period_label' => $periodLabel,
+            'comparison_label' => $comparisonLabel,
             'extra' => $extra,
         ];
     }
@@ -152,20 +356,19 @@ class DashboardController extends Controller
      *
      * @return array<string, mixed>
      */
-    private function resolveOrderMetrics(Carbon $startOfMonth, Carbon $now, Carbon $startOfPreviousMonth, Carbon $endOfPreviousMonth): array
+    private function resolveOrderMetrics(Carbon $currentStart, Carbon $currentEnd, Carbon $previousStart, Carbon $previousEnd): array
     {
         if (!Schema::hasTable('orders')) {
             return [
-                'total_orders' => 0,
-                'current_month_orders' => 0,
-                'previous_month_orders' => 0,
+                'current_orders' => 0,
+                'previous_orders' => 0,
                 'awaiting_fulfillment' => 0,
-                'total_revenue' => 0.0,
-                'current_month_revenue' => 0.0,
-                'previous_month_revenue' => 0.0,
+                'current_revenue' => 0.0,
+                'previous_revenue' => 0.0,
                 'average_order_value' => 0.0,
                 'recent_orders' => [],
                 'top_products' => [],
+                'top_products_comparison' => [],
             ];
         }
 
@@ -175,51 +378,53 @@ class DashboardController extends Controller
 
         $ordersQuery = DB::table('orders')->where('status', '!=', 'draft');
 
-        $totalOrders = (int) (clone $ordersQuery)->count();
-        $currentMonthOrders = (int) (clone $ordersQuery)
-            ->whereBetween('created_at', [$startOfMonth, $now])
+        $currentRangeOrders = (int) (clone $ordersQuery)
+            ->whereBetween('created_at', [$currentStart, $currentEnd])
             ->count();
-        $previousMonthOrders = (int) (clone $ordersQuery)
-            ->whereBetween('created_at', [$startOfPreviousMonth, $endOfPreviousMonth])
+        $previousRangeOrders = (int) (clone $ordersQuery)
+            ->whereBetween('created_at', [$previousStart, $previousEnd])
             ->count();
 
         $awaitingFulfillment = (int) DB::table('orders')
             ->whereIn('status', $countableStatuses)
+            ->whereBetween('created_at', [$currentStart, $currentEnd])
             ->count();
 
-        $totalRevenue = 0.0;
-        $currentMonthRevenue = 0.0;
-        $previousMonthRevenue = 0.0;
+        $currentRevenue = 0.0;
+        $previousRevenue = 0.0;
         $averageOrderValue = 0.0;
 
         if ($amountColumn !== null) {
             $revenueQuery = DB::table('orders')->whereIn('status', $completedStatuses);
 
-            $totalRevenue = (float) (clone $revenueQuery)->sum($amountColumn);
-            $currentMonthRevenue = (float) (clone $revenueQuery)
-                ->whereBetween('created_at', [$startOfMonth, $now])
+            $currentRevenue = (float) (clone $revenueQuery)
+                ->whereBetween('created_at', [$currentStart, $currentEnd])
                 ->sum($amountColumn);
-            $previousMonthRevenue = (float) (clone $revenueQuery)
-                ->whereBetween('created_at', [$startOfPreviousMonth, $endOfPreviousMonth])
+            $previousRevenue = (float) (clone $revenueQuery)
+                ->whereBetween('created_at', [$previousStart, $previousEnd])
                 ->sum($amountColumn);
 
-            $completedOrdersCount = (int) (clone $revenueQuery)->count();
+            $completedOrdersCount = (int) (clone $revenueQuery)
+                ->whereBetween('created_at', [$currentStart, $currentEnd])
+                ->count();
             if ($completedOrdersCount > 0) {
-                $averageOrderValue = $totalRevenue / $completedOrdersCount;
+                $averageOrderValue = $currentRevenue / $completedOrdersCount;
             }
         }
 
+        $topProductsCurrent = $this->resolveTopProducts($completedStatuses, $currentStart, $currentEnd);
+        $topProductsComparison = $this->resolveTopProducts($completedStatuses, $previousStart, $previousEnd);
+
         return [
-            'total_orders' => $totalOrders,
-            'current_month_orders' => $currentMonthOrders,
-            'previous_month_orders' => $previousMonthOrders,
+            'current_orders' => $currentRangeOrders,
+            'previous_orders' => $previousRangeOrders,
             'awaiting_fulfillment' => $awaitingFulfillment,
-            'total_revenue' => $totalRevenue,
-            'current_month_revenue' => $currentMonthRevenue,
-            'previous_month_revenue' => $previousMonthRevenue,
+            'current_revenue' => $currentRevenue,
+            'previous_revenue' => $previousRevenue,
             'average_order_value' => $this->formatCurrency($averageOrderValue),
-            'recent_orders' => $this->resolveRecentOrders($amountColumn),
-            'top_products' => $this->resolveTopProducts($completedStatuses),
+            'recent_orders' => $this->resolveRecentOrders($amountColumn, $currentStart, $currentEnd),
+            'top_products' => $topProductsCurrent,
+            'top_products_comparison' => $topProductsComparison,
         ];
     }
 
@@ -244,7 +449,7 @@ class DashboardController extends Controller
      *
      * @return array<int, array<string, mixed>>
      */
-    private function resolveRecentOrders(?string $amountColumn): array
+    private function resolveRecentOrders(?string $amountColumn, Carbon $rangeStart, Carbon $rangeEnd): array
     {
         if (!Schema::hasColumn('orders', 'created_at')) {
             return [];
@@ -260,6 +465,7 @@ class DashboardController extends Controller
                 'users.email as customer_email',
             ])
             ->where('orders.status', '!=', 'draft')
+            ->whereBetween('orders.created_at', [$rangeStart, $rangeEnd])
             ->orderByDesc('orders.created_at')
             ->limit(5);
 
@@ -291,7 +497,7 @@ class DashboardController extends Controller
      *
      * @return array<int, array<string, mixed>>
      */
-    private function resolveTopProducts(array $completedStatuses): array
+    private function resolveTopProducts(array $completedStatuses, Carbon $rangeStart, Carbon $rangeEnd): array
     {
         if (!Schema::hasTable('order_items')) {
             return [];
@@ -317,6 +523,7 @@ class DashboardController extends Controller
                 $revenueExpression,
             ])
             ->whereIn('orders.status', $completedStatuses)
+            ->whereBetween('orders.created_at', [$rangeStart, $rangeEnd])
             ->groupBy('order_items.product_id', 'products.name')
             ->orderByDesc('total_quantity')
             ->limit(5)
@@ -339,16 +546,15 @@ class DashboardController extends Controller
      *
      * @return array<string, float|int>
      */
-    private function resolveProductMetrics(Carbon $startOfMonth, Carbon $now, Carbon $startOfPreviousMonth, Carbon $endOfPreviousMonth): array
+    private function resolveProductMetrics(Carbon $currentStart, Carbon $currentEnd, Carbon $previousStart, Carbon $previousEnd): array
     {
         $productQuery = Product::query();
-        $totalProducts = (int) (clone $productQuery)->count();
 
-        $currentMonthCreated = (int) (clone $productQuery)
-            ->whereBetween('created_at', [$startOfMonth, $now])
+        $currentRangeCreated = (int) (clone $productQuery)
+            ->whereBetween('created_at', [$currentStart, $currentEnd])
             ->count();
-        $previousMonthCreated = (int) (clone $productQuery)
-            ->whereBetween('created_at', [$startOfPreviousMonth, $endOfPreviousMonth])
+        $previousRangeCreated = (int) (clone $productQuery)
+            ->whereBetween('created_at', [$previousStart, $previousEnd])
             ->count();
 
         $categoryCount = (int) Category::query()->count();
@@ -358,9 +564,8 @@ class DashboardController extends Controller
             : 0;
 
         return [
-            'total_products' => $totalProducts,
-            'current_month_created' => $currentMonthCreated,
-            'previous_month_created' => $previousMonthCreated,
+            'current_products' => $currentRangeCreated,
+            'previous_products' => $previousRangeCreated,
             'category_count' => $categoryCount,
             'low_stock_count' => $lowStockCount,
         ];
@@ -371,22 +576,20 @@ class DashboardController extends Controller
      *
      * @return array<string, float|int>
      */
-    private function resolveUserMetrics(Carbon $startOfMonth, Carbon $now, Carbon $startOfPreviousMonth, Carbon $endOfPreviousMonth): array
+    private function resolveUserMetrics(Carbon $currentStart, Carbon $currentEnd, Carbon $previousStart, Carbon $previousEnd): array
     {
         $userQuery = DB::table('users')->whereNull('deleted_at');
 
-        $totalUsers = (int) (clone $userQuery)->count();
-        $currentMonthUsers = (int) (clone $userQuery)
-            ->whereBetween('created_at', [$startOfMonth, $now])
+        $currentUsers = (int) (clone $userQuery)
+            ->whereBetween('created_at', [$currentStart, $currentEnd])
             ->count();
-        $previousMonthUsers = (int) (clone $userQuery)
-            ->whereBetween('created_at', [$startOfPreviousMonth, $endOfPreviousMonth])
+        $previousUsers = (int) (clone $userQuery)
+            ->whereBetween('created_at', [$previousStart, $previousEnd])
             ->count();
 
         return [
-            'total_users' => $totalUsers,
-            'current_month_users' => $currentMonthUsers,
-            'previous_month_users' => $previousMonthUsers,
+            'current_users' => $currentUsers,
+            'previous_users' => $previousUsers,
         ];
     }
 }
