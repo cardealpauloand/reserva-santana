@@ -147,7 +147,23 @@ class SalesSeeder extends Seeder
             User::factory()->count($minimumCustomers - $currentCount)->create();
         }
 
-        return User::query()->get();
+        $startOfYear = now()->startOfYear();
+        $now = now();
+
+        $customers = User::query()->get();
+
+        $customers->each(function (User $user) use ($startOfYear, $now) {
+            $createdAt = $this->randomDateTimeBetween($startOfYear, $now);
+            $updatedAt = $createdAt->copy()->addDays(random_int(0, 30))->addHours(random_int(0, 12));
+
+            User::withoutTimestamps(function () use ($user, $createdAt, $updatedAt) {
+                $user->created_at = $createdAt;
+                $user->updated_at = $updatedAt;
+                $user->saveQuietly();
+            });
+        });
+
+        return $customers;
     }
 
     /**
