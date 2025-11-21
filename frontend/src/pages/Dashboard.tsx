@@ -31,7 +31,7 @@ import {
   Minus,
   type LucideIcon,
 } from "lucide-react";
-import { format, startOfMonth, subDays } from "date-fns";
+import { format, startOfMonth, startOfYear, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   type DashboardSummary,
@@ -95,6 +95,14 @@ const buildCurrentMonthRange = (): DateRange => {
   };
 };
 
+const buildCurrentYearRange = (): DateRange => {
+  const today = new Date();
+  return {
+    from: startOfYear(today),
+    to: today,
+  };
+};
+
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -113,7 +121,7 @@ const Dashboard = () => {
     "primary"
   );
   const [refreshing, setRefreshing] = useState(false);
-  const [topProductsView, setTopProductsView] = useState<"primary" | "comparison">(
+  const [dashboardView, setDashboardView] = useState<"primary" | "comparison">(
     "primary"
   );
   const hasLoadedRef = useRef(false);
@@ -189,7 +197,10 @@ const Dashboard = () => {
     );
   }, [summary]);
 
-  const hasComparisonTopProducts = summaryData.topProductsComparison.length > 0;
+  const hasComparisonRange = Boolean(
+    summaryData.comparisonRange.start && summaryData.comparisonRange.end
+  );
+  const isComparisonView = dashboardView === "comparison";
 
   const topProductsPrimaryData = useMemo(() => {
     if (!summaryData.topProducts?.length) {
@@ -219,32 +230,29 @@ const Dashboard = () => {
     }));
   }, [summaryData.topProductsComparison]);
 
-  const activeTopProductsData =
-    topProductsView === "comparison" ? topProductsComparisonData : topProductsPrimaryData;
+  const activeTopProductsData = isComparisonView
+    ? topProductsComparisonData
+    : topProductsPrimaryData;
 
-  const topProductsViewLabel =
-    topProductsView === "comparison"
-      ? summaryData.comparisonRange.label || "Período comparativo"
-      : summaryData.selectedRange.label || "Período principal";
+  const topProductsViewLabel = isComparisonView
+    ? summaryData.comparisonRange.label || "Período comparativo"
+    : summaryData.selectedRange.label || "Período principal";
 
-  const topProductsEmptyMessage =
-    topProductsView === "comparison"
+  const topProductsEmptyMessage = isComparisonView
+    ? hasComparisonRange
       ? "Nenhum produto com vendas no período comparativo."
-      : "Nenhuma venda registrada até o momento.";
+      : "Selecione um período comparativo para visualizar os dados."
+    : "Nenhuma venda registrada até o momento.";
 
   useEffect(() => {
-    if (topProductsView === "comparison" && !hasComparisonTopProducts) {
-      setTopProductsView("primary");
+    if (!hasComparisonRange && isComparisonView) {
+      setDashboardView("primary");
     }
-  }, [topProductsView, hasComparisonTopProducts]);
+  }, [hasComparisonRange, isComparisonView]);
 
-  useEffect(() => {
-    setTopProductsView("primary");
-  }, [summaryData.selectedRange.start, summaryData.selectedRange.end]);
-
-  const handleTopProductsViewChange = (value: string) => {
-    if (value === "primary" || (value === "comparison" && hasComparisonTopProducts)) {
-      setTopProductsView(value as "primary" | "comparison");
+  const handleDashboardViewChange = (value: string) => {
+    if (value === "primary" || (value === "comparison" && hasComparisonRange)) {
+      setDashboardView(value as "primary" | "comparison");
     }
   };
 
@@ -326,8 +334,14 @@ const Dashboard = () => {
     statFormat: "number" | "currency",
     periodLabel: string,
     currentValue: number,
-    extra: Record<string, number>
+    extra: Record<string, number>,
+    isComparison = false
   ) => {
+    if (isComparison) {
+      const label = periodLabel || "Período comparativo";
+      return `${label}: ${formatByType(currentValue, statFormat)}`;
+    }
+
     if (statKey === "orders") {
       const awaiting = extra.awaiting_fulfillment ?? 0;
       return `${periodLabel}: ${formatByType(
@@ -359,20 +373,35 @@ const Dashboard = () => {
   };
 
   const handlePresetRange = (
-    days: number,
+    preset: "last7" | "year",
     target: "primary" | "comparison" = "primary"
   ) => {
-    const to = new Date();
-    const from = subDays(to, days - 1);
-    if (target === "primary") {
-      setPrimaryRange({ from, to });
+    if (preset === "last7") {
+      const to = new Date();
+      const from = subDays(to, 6);
+      if (target === "primary") {
+        setPrimaryRange({ from, to });
+        return;
+      }
+      setComparisonRange({ from, to });
       return;
     }
-    setComparisonRange({ from, to });
+
+    const totalRange = buildCurrentYearRange();
+    if (target === "primary") {
+      setPrimaryRange(totalRange);
+      return;
+    }
+    setComparisonRange(totalRange);
   };
 
-  const resetToCurrentMonth = () => {
-    setPrimaryRange(buildCurrentMonthRange());
+  const resetToCurrentMonth = (target: "primary" | "comparison" = "primary") => {
+    const monthRange = buildCurrentMonthRange();
+    if (target === "primary") {
+      setPrimaryRange(monthRange);
+      return;
+    }
+    setComparisonRange(monthRange);
   };
 
   const clearComparisonRange = () => {
@@ -415,6 +444,29 @@ const Dashboard = () => {
                     <Loader2 className="mr-1 h-4 w-4 animate-spin" /> Atualizando
                   </span>
                 )}
+                <ToggleGroup
+                  type="single"
+                  value={dashboardView}
+                  onValueChange={handleDashboardViewChange}
+                  size="sm"
+                  variant="outline"
+                  className="rounded-full border bg-background/60 p-0.5 shadow-sm"
+                  aria-label="Alternar visualização do dashboard"
+                >
+                  <ToggleGroupItem
+                    value="primary"
+                    className="rounded-full data-[state=on]:bg-[hsl(var(--wine-burgundy))] data-[state=on]:text-white data-[state=on]:shadow-sm"
+                  >
+                    Período principal
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="comparison"
+                    disabled={!hasComparisonRange}
+                    className="rounded-full data-[state=on]:bg-[hsl(var(--wine-burgundy))] data-[state=on]:text-white data-[state=on]:shadow-sm"
+                  >
+                    Período comparativo
+                  </ToggleGroupItem>
+                </ToggleGroup>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -473,19 +525,23 @@ const Dashboard = () => {
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => handlePresetRange(7, activeRange)}
+                        onClick={() => handlePresetRange("last7", activeRange)}
                       >
                         Últimos 7 dias
                       </Button>
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => handlePresetRange(30, activeRange)}
+                        onClick={() => resetToCurrentMonth(activeRange)}
                       >
-                        Últimos 30 dias
-                      </Button>
-                      <Button size="sm" variant="secondary" onClick={resetToCurrentMonth}>
                         Mês atual
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => handlePresetRange("year", activeRange)}
+                      >
+                        Ano atual
                       </Button>
                       <Button
                         size="sm"
@@ -591,13 +647,17 @@ const Dashboard = () => {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {summaryData.stats.map((stat) => {
               const Icon = iconMap[stat.key] ?? BarChart3;
-              // const changeDescription = formatChangeDescription(stat); // Removed old description
-              
-              const changePercentage = stat.changePercentage;
-              const hasChange = changePercentage !== null;
-              const isPositive = hasChange && changePercentage > 0;
-              const isNegative = hasChange && changePercentage < 0;
-              
+              const baseChange = stat.changePercentage;
+              const adjustedChange =
+                baseChange === null
+                  ? null
+                  : isComparisonView
+                    ? -baseChange
+                    : baseChange;
+              const hasChange = adjustedChange !== null;
+              const isPositive = hasChange && (adjustedChange as number) > 0;
+              const isNegative = hasChange && (adjustedChange as number) < 0;
+
               const changeColorClass = !hasChange
                   ? "text-muted-foreground"
                   : isPositive
@@ -606,12 +666,21 @@ const Dashboard = () => {
                       ? "text-red-600"
                       : "text-muted-foreground";
 
+              const displayValue = (isComparisonView
+                ? stat.previousPeriodTotal
+                : stat.currentPeriodTotal) ?? 0;
+
+              const periodLabel = isComparisonView
+                ? stat.comparisonLabel
+                : stat.periodLabel;
+
               const secondaryDescription = buildSecondaryDescription(
                 stat.key,
                 stat.format,
-                stat.periodLabel,
-                stat.currentPeriodTotal,
-                stat.extra
+                periodLabel,
+                displayValue,
+                stat.extra ?? {},
+                isComparisonView
               );
 
               return (
@@ -624,7 +693,7 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {formatByType(stat.value, stat.format)}
+                      {formatByType(displayValue, stat.format)}
                     </div>
                     
                     <div className="flex items-center mt-1">
@@ -638,7 +707,7 @@ const Dashboard = () => {
                             <Minus className={cn("h-4 w-4 mr-1", changeColorClass)} />
                           )}
                           <span className={cn("text-xs font-medium", changeColorClass)}>
-                            {Math.abs(changePercentage).toFixed(1)}%
+                            {Math.abs(adjustedChange as number).toFixed(1)}%
                           </span>
                         </>
                       ) : (
@@ -664,7 +733,11 @@ const Dashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {summaryData.recentOrders.length === 0 ? (
+                {isComparisonView ? (
+                  <p className="text-sm text-muted-foreground">
+                    Os detalhes de pedidos recentes estão disponíveis apenas para o período principal.
+                  </p>
+                ) : summaryData.recentOrders.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     Nenhum pedido registrado ainda.
                   </p>
@@ -722,34 +795,9 @@ const Dashboard = () => {
                     Top 5 produtos com maior volume de vendas
                   </CardDescription>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <ToggleGroup
-                    type="single"
-                    value={topProductsView}
-                    onValueChange={handleTopProductsViewChange}
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full border bg-background/60 p-0.5 shadow-sm"
-                    aria-label="Alternar período dos produtos"
-                  >
-                    <ToggleGroupItem
-                      value="primary"
-                      className="rounded-full data-[state=on]:bg-[hsl(var(--wine-burgundy))] data-[state=on]:text-white data-[state=on]:shadow-sm"
-                    >
-                      Período principal
-                    </ToggleGroupItem>
-                    <ToggleGroupItem
-                      value="comparison"
-                      disabled={!hasComparisonTopProducts}
-                      className="rounded-full data-[state=on]:bg-[hsl(var(--wine-burgundy))] data-[state=on]:text-white data-[state=on]:shadow-sm"
-                    >
-                      Período comparativo
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                  <span className="text-xs text-muted-foreground">
-                    {topProductsViewLabel || (topProductsView === "comparison" ? "Período comparativo" : "Período principal")}
-                  </span>
-                </div>
+                <span className="inline-flex items-center rounded-full bg-muted/60 px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {topProductsViewLabel}
+                </span>
               </CardHeader>
               <CardContent>
                 {activeTopProductsData.length === 0 ? (

@@ -19,7 +19,7 @@ use Illuminate\Support\Str;
 
 class SalesSeeder extends Seeder
 {
-    private const TARGET_ORDER_COUNT = 180;
+    private const TARGET_ORDER_COUNT = 720;
 
     /**
      * Weighted distribution for realistic order statuses.
@@ -75,7 +75,7 @@ class SalesSeeder extends Seeder
 
         $this->resetOrderData();
 
-        $startDate = now()->subMonths(6)->startOfDay();
+        $startDate = now()->startOfYear()->startOfDay();
         $endDate = now();
 
         DB::transaction(function () use ($products, $customers, $addressBook, $addressStrategy, $faker, $startDate, $endDate) {
@@ -140,7 +140,7 @@ class SalesSeeder extends Seeder
      */
     private function prepareCustomers(): Collection
     {
-        $minimumCustomers = 30;
+        $minimumCustomers = 120;
         $currentCount = User::query()->count();
 
         if ($currentCount < $minimumCustomers) {
