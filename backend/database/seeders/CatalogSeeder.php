@@ -341,7 +341,7 @@ class CatalogSeeder extends Seeder
                     'name' => 'Grand Arte Alicante Bouschet Vinho Regional Lisboa 2022',
                     'slug' => 'grand-arte-alicante-bouschet-vinho-regional-lisboa-2022',
                     'origin' => 'Lisboa, Portugal',
-                    'type' => 'tinto',
+                    'type' => 'Tinto',
                     'price' => '109.7',
                     'original_price' => '139.7',
                     'rating' => 5,

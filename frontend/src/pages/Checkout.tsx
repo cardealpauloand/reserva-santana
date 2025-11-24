@@ -120,9 +120,7 @@ const Checkout = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | number>(
-    "new"
-  );
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("new");
   const [saveNewAddress, setSaveNewAddress] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -180,8 +178,12 @@ const Checkout = () => {
       if (data && data.length > 0) {
         setSavedAddresses(data);
         const defaultAddress = data.find((addr) => addr.is_default) || data[0];
-        setSelectedAddressId(defaultAddress.id);
-        fillFormWithAddress(defaultAddress);
+        if (defaultAddress) {
+          setSelectedAddressId(defaultAddress.id);
+          fillFormWithAddress(defaultAddress);
+        } else {
+          setSelectedAddressId("new");
+        }
       }
     } catch (error) {
       console.error("Error loading addresses:", error);
@@ -201,7 +203,7 @@ const Checkout = () => {
     loadSavedAddresses();
   }, [user, navigate, toast, loadSavedAddresses]);
 
-  const handleAddressSelection = (addressId: string | number) => {
+  const handleAddressSelection = (addressId: string) => {
     setSelectedAddressId(addressId);
     if (addressId === "new") {
       setFormData({
@@ -577,12 +579,8 @@ const Checkout = () => {
                             Escolha o endereço
                           </Label>
                           <RadioGroup
-                            value={String(selectedAddressId)}
-                            onValueChange={(val) =>
-                              handleAddressSelection(
-                                val === "new" ? "new" : Number(val)
-                              )
-                            }
+                            value={selectedAddressId}
+                            onValueChange={handleAddressSelection}
                           >
                             {savedAddresses.map((address) => (
                               <div
@@ -590,8 +588,8 @@ const Checkout = () => {
                                 className="flex items-start space-x-3 space-y-0"
                               >
                                 <RadioGroupItem
-                                  value={String(address.id)}
-                                  id={String(address.id)}
+                                  value={address.id}
+                                  id={address.id}
                                 />
                                 <Label
                                   htmlFor={String(address.id)}

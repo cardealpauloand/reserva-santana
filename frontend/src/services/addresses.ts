@@ -24,7 +24,7 @@ export const addressesService = {
   /**
    * Delete an address
    */
-  async deleteAddress(id: number): Promise<{ message: string }> {
+  async deleteAddress(id: string): Promise<{ message: string }> {
     return await apiFetch<{ message: string }>(`/addresses/${id}`, {
       method: 'DELETE',
     });

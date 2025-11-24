@@ -17,16 +17,6 @@ type ApiDashboardStat = {
   extra?: Record<string, number> | null;
 };
 
-type ApiRecentOrder = {
-  id: number;
-  order_number: string;
-  status: string;
-  total: number;
-  customer_name: string | null;
-  customer_email: string | null;
-  created_at: string;
-};
-
 type ApiTopProduct = {
   product_id: number;
   name: string;
@@ -34,9 +24,35 @@ type ApiTopProduct = {
   revenue: number;
 };
 
+type ApiTopType = {
+  type: string;
+  quantity_sold: number;
+  revenue: number;
+};
+
+type ApiTopCustomer = {
+  user_id: number | null;
+  name: string | null;
+  email: string | null;
+  order_count: number;
+  total_spent: number;
+};
+
 type ApiInventorySummary = {
   category_count: number;
   low_stock_count: number;
+};
+
+type ApiTrendPoint = {
+  label: string;
+  start: string;
+  end: string;
+  total: number;
+};
+
+type ApiTrend = {
+  grouping: "day" | "week" | "month" | string;
+  points: ApiTrendPoint[];
 };
 
 type ApiSelectedRange = {
@@ -56,13 +72,17 @@ type ApiComparisonRange = {
 
 type ApiDashboardSummary = {
   stats: ApiDashboardStat[];
-  recent_orders: ApiRecentOrder[];
   top_products: ApiTopProduct[];
   top_products_comparison?: ApiTopProduct[];
+  top_types?: ApiTopType[];
+  top_types_comparison?: ApiTopType[];
+  top_customers?: ApiTopCustomer[];
   inventory: ApiInventorySummary;
   selected_range?: ApiSelectedRange | null;
   comparison_range?: ApiComparisonRange | null;
   comparison_note?: string | null;
+  revenue_trend?: ApiTrend | null;
+  revenue_trend_comparison?: ApiTrend | null;
 };
 
 export type DashboardStat = {
@@ -78,16 +98,6 @@ export type DashboardStat = {
   extra: Record<string, number>;
 };
 
-export type DashboardRecentOrder = {
-  id: number;
-  orderNumber: string;
-  status: string;
-  total: number;
-  customerName: string | null;
-  customerEmail: string | null;
-  createdAt: string;
-};
-
 export type DashboardTopProduct = {
   productId: number;
   name: string;
@@ -95,20 +105,50 @@ export type DashboardTopProduct = {
   revenue: number;
 };
 
+export type DashboardTopType = {
+  type: string;
+  quantitySold: number;
+  revenue: number;
+};
+
+export type DashboardTopCustomer = {
+  userId: number | null;
+  name: string;
+  email: string | null;
+  orderCount: number;
+  totalSpent: number;
+};
+
 export type InventorySummary = {
   categoryCount: number;
   lowStockCount: number;
 };
 
+export type RevenueTrendPoint = {
+  label: string;
+  start: string;
+  end: string;
+  total: number;
+};
+
+export type RevenueTrend = {
+  grouping: "day" | "week" | "month" | string;
+  points: RevenueTrendPoint[];
+};
+
 export type DashboardSummary = {
   stats: DashboardStat[];
-  recentOrders: DashboardRecentOrder[];
   topProducts: DashboardTopProduct[];
   topProductsComparison: DashboardTopProduct[];
+  topTypes: DashboardTopType[];
+  topTypesComparison: DashboardTopType[];
+  topCustomers: DashboardTopCustomer[];
   inventory: InventorySummary;
   selectedRange: SelectedRange;
   comparisonRange: ComparisonRange;
   comparisonNote: string;
+  revenueTrend: RevenueTrend;
+  revenueTrendComparison: RevenueTrend;
 };
 
 export type SelectedRange = {
@@ -148,18 +188,6 @@ function mapStat(stat: ApiDashboardStat): DashboardStat {
   } satisfies DashboardStat;
 }
 
-function mapRecentOrder(order: ApiRecentOrder): DashboardRecentOrder {
-  return {
-    id: order.id,
-    orderNumber: order.order_number,
-    status: order.status,
-    total: order.total,
-    customerName: order.customer_name,
-    customerEmail: order.customer_email,
-    createdAt: order.created_at,
-  } satisfies DashboardRecentOrder;
-}
-
 function mapTopProduct(product: ApiTopProduct): DashboardTopProduct {
   return {
     productId: product.product_id,
@@ -169,11 +197,41 @@ function mapTopProduct(product: ApiTopProduct): DashboardTopProduct {
   } satisfies DashboardTopProduct;
 }
 
+function mapTopType(type: ApiTopType): DashboardTopType {
+  return {
+    type: type.type,
+    quantitySold: type.quantity_sold,
+    revenue: type.revenue,
+  } satisfies DashboardTopType;
+}
+
+function mapTopCustomer(customer: ApiTopCustomer): DashboardTopCustomer {
+  return {
+    userId: customer.user_id,
+    name: customer.name ?? "Cliente",
+    email: customer.email,
+    orderCount: customer.order_count,
+    totalSpent: customer.total_spent,
+  } satisfies DashboardTopCustomer;
+}
+
 function mapInventorySummary(inventory: ApiInventorySummary): InventorySummary {
   return {
     categoryCount: inventory.category_count,
     lowStockCount: inventory.low_stock_count,
   } satisfies InventorySummary;
+}
+
+function mapTrend(trend?: ApiTrend | null): RevenueTrend {
+  return {
+    grouping: trend?.grouping ?? "day",
+    points: (trend?.points ?? []).map((point) => ({
+      label: point.label,
+      start: point.start,
+      end: point.end,
+      total: point.total,
+    } satisfies RevenueTrendPoint)),
+  } satisfies RevenueTrend;
 }
 
 export async function fetchDashboardSummary(filters?: DashboardFilters): Promise<DashboardSummary> {
@@ -199,9 +257,11 @@ export async function fetchDashboardSummary(filters?: DashboardFilters): Promise
 
   return {
     stats: response.data.stats.map(mapStat),
-    recentOrders: response.data.recent_orders.map(mapRecentOrder),
     topProducts: response.data.top_products.map(mapTopProduct),
     topProductsComparison: (response.data.top_products_comparison ?? []).map(mapTopProduct),
+    topTypes: (response.data.top_types ?? []).map(mapTopType),
+    topTypesComparison: (response.data.top_types_comparison ?? []).map(mapTopType),
+    topCustomers: (response.data.top_customers ?? []).map(mapTopCustomer),
     inventory: mapInventorySummary(response.data.inventory),
     selectedRange: {
       start: response.data.selected_range?.start ?? "",
@@ -217,5 +277,7 @@ export async function fetchDashboardSummary(filters?: DashboardFilters): Promise
       days: response.data.comparison_range?.days ?? 0,
     },
     comparisonNote: response.data.comparison_note ?? "",
+    revenueTrend: mapTrend(response.data.revenue_trend),
+    revenueTrendComparison: mapTrend(response.data.revenue_trend_comparison),
   } satisfies DashboardSummary;
 }
