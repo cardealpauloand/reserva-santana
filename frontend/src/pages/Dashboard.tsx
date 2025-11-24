@@ -25,6 +25,7 @@ const createEmptySummary = (): DashboardSummary => ({
   topTypes: [],
   topTypesComparison: [],
   topCustomers: [],
+  topCustomersComparison: [],
   inventory: { categoryCount: 0, lowStockCount: 0 },
   selectedRange: { start: "", end: "", label: "", days: 0 },
   comparisonRange: { start: "", end: "", label: "", source: "", days: 0 },
@@ -237,7 +238,14 @@ const Dashboard = () => {
             />
           </div>
 
-          <TopCustomersCard customers={summaryData.topCustomers} isComparisonView={isComparisonView} />
+          <TopCustomersCard
+            customers={summaryData.topCustomers}
+            comparisonCustomers={summaryData.topCustomersComparison}
+            isComparisonView={isComparisonView}
+            hasComparisonRange={hasComparisonRange}
+            primaryLabel={summaryData.selectedRange.label}
+            comparisonLabel={summaryData.comparisonRange.label}
+          />
         </div>
       </main>
       <Footer />

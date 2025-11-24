@@ -77,6 +77,7 @@ type ApiDashboardSummary = {
   top_types?: ApiTopType[];
   top_types_comparison?: ApiTopType[];
   top_customers?: ApiTopCustomer[];
+  top_customers_comparison?: ApiTopCustomer[];
   inventory: ApiInventorySummary;
   selected_range?: ApiSelectedRange | null;
   comparison_range?: ApiComparisonRange | null;
@@ -143,6 +144,7 @@ export type DashboardSummary = {
   topTypes: DashboardTopType[];
   topTypesComparison: DashboardTopType[];
   topCustomers: DashboardTopCustomer[];
+  topCustomersComparison: DashboardTopCustomer[];
   inventory: InventorySummary;
   selectedRange: SelectedRange;
   comparisonRange: ComparisonRange;
@@ -262,6 +264,7 @@ export async function fetchDashboardSummary(filters?: DashboardFilters): Promise
     topTypes: (response.data.top_types ?? []).map(mapTopType),
     topTypesComparison: (response.data.top_types_comparison ?? []).map(mapTopType),
     topCustomers: (response.data.top_customers ?? []).map(mapTopCustomer),
+    topCustomersComparison: (response.data.top_customers_comparison ?? []).map(mapTopCustomer),
     inventory: mapInventorySummary(response.data.inventory),
     selectedRange: {
       start: response.data.selected_range?.start ?? "",

@@ -49,6 +49,7 @@ class DashboardMetricsService
             'top_types' => $orders['top_types'],
             'top_types_comparison' => $orders['top_types_comparison'],
             'top_customers' => $orders['top_customers'],
+            'top_customers_comparison' => $orders['top_customers_comparison'],
             'revenue_trend' => $orders['revenue_trend'],
             'revenue_trend_comparison' => $orders['revenue_trend_comparison'],
             'inventory' => [
@@ -360,6 +361,7 @@ class DashboardMetricsService
         $topTypesCurrent = $this->resolveTopProductTypes(self::COMPLETED_STATUSES, $currentStart, $currentEnd);
         $topTypesComparison = $this->resolveTopProductTypes(self::COMPLETED_STATUSES, $previousStart, $previousEnd);
         $topCustomers = $this->resolveTopCustomers(self::COMPLETED_STATUSES, $amountColumn, $currentStart, $currentEnd);
+        $topCustomersComparison = $this->resolveTopCustomers(self::COMPLETED_STATUSES, $amountColumn, $previousStart, $previousEnd);
 
         return [
             'current_orders' => $currentRangeOrders,
@@ -372,6 +374,7 @@ class DashboardMetricsService
             'top_types' => $topTypesCurrent,
             'top_types_comparison' => $topTypesComparison,
             'top_customers' => $topCustomers,
+            'top_customers_comparison' => $topCustomersComparison,
             'revenue_trend' => $this->buildRevenueTrend(
                 self::COMPLETED_STATUSES,
                 $currentStart,
@@ -400,6 +403,7 @@ class DashboardMetricsService
             'top_types' => [],
             'top_types_comparison' => [],
             'top_customers' => [],
+            'top_customers_comparison' => [],
             'revenue_trend' => [
                 'grouping' => 'day',
                 'points' => [],
