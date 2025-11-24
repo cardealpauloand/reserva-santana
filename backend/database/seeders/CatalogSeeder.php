@@ -58,8 +58,8 @@ class CatalogSeeder extends Seeder
 
             $products = [
                 [
-                    'name' => 'Kit 10 Vinhos por R$27,90 cada garrafa',
-                    'slug' => 'kit-10-vinhos-por-27-90-cada-garrafa',
+                    'name' => 'Kit 10 Vinhos',
+                    'slug' => 'kit-10-vinhos',
                     'origin' => 'Vários Países',
                     'type' => 'Kit',
                     'price' => '279',
@@ -73,7 +73,7 @@ class CatalogSeeder extends Seeder
                     'categories' => ['tintos','brancos'],
                 ],
                 [
-                    'name' => 'Kit 9 Espumantes por R$32,90 cada garrafa',
+                    'name' => 'Kit 9 Espumantes',
                     'slug' => 'kit-9-espumantes',
                     'origin' => 'Madrid, Espanha',
                     'type' => 'Kit',
@@ -466,8 +466,8 @@ class CatalogSeeder extends Seeder
                 ],
                 /*kit refrescantes*/
                 [
-                    'name' => 'Kit 10 Vinhos Refrescantes por R$25,90 cada garrafa',
-                    'slug' => 'kit-10-vinhos-refrescantes-por-r-25-90-cada-garrafa',
+                    'name' => 'Kit 10 Vinhos Refrescantes',
+                    'slug' => 'kit-10-vinhos-refrescantes',
                     'origin' => 'Barcelona, Espanha',
                     'type' => 'Kit',
                     'price' => '599.6',
@@ -530,8 +530,8 @@ class CatalogSeeder extends Seeder
 
                 /*kits primitivos*/
                 [
-                    'name' => 'Kit 5 Casale Brondello Primitivo di Manduria DOC por R$99,90 cada garrafa + Bolsa Exclusiva',
-                    'slug' => 'kit-5-casale-brondello-primitivo-di-manduria-doc-por-99-90-cada-garrafa-bolsa-exclusiva',
+                    'name' => 'Kit 5 Casale Brondello Primitivo di Manduria DOC + Bolsa Exclusiva',
+                    'slug' => 'kit-5-casale-brondello-primitivo-di-manduria-doc-bolsa-exclusiva',
                     'origin' => 'Veneto, Itália',
                     'type' => 'Kit',
                     'price' => '499.5',
@@ -545,8 +545,8 @@ class CatalogSeeder extends Seeder
                     'categories' => ['kit-primitivo','tintos'],
                 ],
                 [
-                    'name' => 'Kit 3 Primitivos di Manduria por R$119,90 cada garrafa + Bolsa Exclusiva Grátis',
-                    'slug' => 'kit-3-primitivos-di-manduria-por-119-90-cada-garrafa-bolsa-exclusiva-gratis',
+                    'name' => 'Kit 3 Primitivos di Manduria + Bolsa Exclusiva Grátis',
+                    'slug' => 'kit-3-primitivos-di-manduria-bolsa-exclusiva-gratis',
                     'origin' => 'Veneto, Itália',
                     'type' => 'Kit',
                     'price' => '359.7',
@@ -576,8 +576,8 @@ class CatalogSeeder extends Seeder
                 ],
 
                 [
-                    'name' => 'Kit 6 Primitivos por R$82,00 cada garrafa',
-                    'slug' => 'kit-6-primitivos-por-82-00-cada',
+                    'name' => 'Kit 6 Primitivos',
+                    'slug' => 'kit-6-primitivos',
                     'origin' => 'Veneto, Itália',
                     'type' => 'Kit',
                     'price' => '429.2',
@@ -641,9 +641,9 @@ class CatalogSeeder extends Seeder
                     'categories' => ['kit-barolo','tintos','premium-raros'],
                 ],
 
-                [
-                   'name' => 'Kit Barolo | 3 garrafas por R$279,90 cada + Bolsa Exclusiva Grátis',
-                    'slug' => 'kit-3-barolos-por-279-90-cada-bolsa-gratis',
+                     [
+                         'name' => 'Kit Barolo | 3 garrafas + Bolsa Exclusiva Grátis',
+                          'slug' => 'kit-barolo-3-garrafas-bolsa-exclusiva-gratis',
                     'origin' => 'Veneto, Itália',
                     'type' => 'Kit',
                     'price' => '869.7',
@@ -659,8 +659,8 @@ class CatalogSeeder extends Seeder
                 
                 /*kits uvas iconicas*/
                 [
-                    'name' => 'Kit Uvas Icônicas | 10 garrafas por R$28,90 cada',
-                    'slug' => 'kit-10-uvas-iconicas-por-28-90-cada',
+                    'name' => 'Kit Uvas Icônicas | 10 garrafas',
+                    'slug' => 'kit-uvas-iconicas-10-garrafas',
                     'origin' => 'Colchagua Valley, Chile',
                     'type' => 'Kit',
                     'price' => '289',
@@ -674,8 +674,8 @@ class CatalogSeeder extends Seeder
                     'categories' => ['kit-uvas-iconicas','tintos','brancos'],
                 ],
                 [
-                    'name' => 'Kit Uvas Icônicas | 10 garrafas por R$31,90 cada',
-                    'slug' => 'kit-10-uvas-iconicas-por-31-90-cada',
+                    'name' => 'Kit Uvas Icônicas | 10 garrafas',
+                    'slug' => 'kit-uvas-iconicas-10-garrafas-selecao',
                     'origin' => 'Vários países',
                     'type' => 'Kit',
                     'price' => '319',
@@ -689,8 +689,8 @@ class CatalogSeeder extends Seeder
                     'categories' => ['kit-uvas-iconicas','tintos'],
                 ],
                 [
-                    'name' => 'Kit Uvas Ícones | 10 garrafas por R$37,90 cada + Bolsa Exclusiva Grátis',
-                    'slug' => 'kit-10-uvas-icones-bolsa-exclusiva-gratis',
+                    'name' => 'Kit Uvas Ícones | 10 garrafas + Bolsa Exclusiva Grátis',
+                    'slug' => 'kit-uvas-icones-10-garrafas-bolsa-exclusiva-gratis',
                     'origin' => 'Santa Rita, Chile',
                     'type' => 'Kit',
                     'price' => '379',
