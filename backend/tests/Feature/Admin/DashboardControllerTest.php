@@ -42,7 +42,151 @@ class DashboardControllerTest extends TestCase
         });
     }
 
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
+    }
+
     public function test_it_returns_dashboard_summary_with_data(): void
+    {
+        $this->freezeNow();
+        $fixtures = $this->seedDashboardData();
+
+        $response = $this->getJson('/api/admin/dashboard');
+
+        $response->assertOk();
+
+        $response->assertJsonPath('data.stats.0.key', 'orders');
+        $response->assertJsonPath('data.stats.0.value', 2);
+        $response->assertJsonPath('data.stats.0.extra.awaiting_fulfillment', 2);
+
+        $response->assertJsonPath('data.stats.3.key', 'revenue');
+        $response->assertJsonPath('data.stats.3.value', 250.5);
+        $response->assertJsonPath('data.stats.3.extra.average_order_value', 250.5);
+
+        $response->assertJsonPath('data.inventory.category_count', 1);
+        $response->assertJsonPath('data.inventory.low_stock_count', 1);
+
+        $response->assertJsonCount(2, 'data.recent_orders');
+        $response->assertJsonPath('data.recent_orders.0.id', $fixtures['pendingOrderId']);
+
+        $response->assertJsonPath('data.top_products.0.product_id', $fixtures['recentProductId']);
+        $response->assertJsonPath('data.top_products.0.quantity_sold', 2);
+
+        $currentStart = Carbon::now()->copy()->startOfMonth();
+        $currentEnd = Carbon::now()->copy()->endOfDay();
+        $days = $currentStart->diffInDays($currentEnd) + 1;
+        $comparisonEnd = $currentStart->copy()->subSecond();
+        $comparisonStart = $comparisonEnd->copy()->subDays($days - 1)->startOfDay();
+
+        $response->assertJsonPath('data.comparison_range.source', 'prior_block');
+        $response->assertJsonPath('data.comparison_range.days', $days);
+        $response->assertJsonPath('data.comparison_range.start', $comparisonStart->toDateString());
+        $response->assertJsonPath('data.comparison_range.end', $comparisonEnd->toDateString());
+        $response->assertJsonPath('data.stats.0.comparison_label', $response->json('data.comparison_range.label'));
+        $this->assertStringContainsString(
+            $comparisonStart->format('d/m/Y'),
+            (string) $response->json('data.comparison_note')
+        );
+    }
+
+    public function test_it_respects_custom_date_filters(): void
+    {
+        $this->freezeNow();
+        $fixtures = $this->seedDashboardData();
+
+        $start = Carbon::now()->copy()->subMonth()->startOfMonth()->format('Y-m-d');
+        $end = Carbon::now()->copy()->subMonth()->endOfMonth()->format('Y-m-d');
+
+        $response = $this->getJson("/api/admin/dashboard?start_date={$start}&end_date={$end}");
+
+        $response->assertOk()
+            ->assertJsonPath('data.stats.0.value', 1)
+            ->assertJsonPath('data.stats.3.value', 180.0)
+            ->assertJsonCount(1, 'data.recent_orders')
+            ->assertJsonPath('data.recent_orders.0.id', $fixtures['previousOrderId'])
+            ->assertJsonPath('data.top_products.0.quantity_sold', 1);
+    }
+
+    public function test_it_handles_missing_order_tables(): void
+    {
+        $this->freezeNow();
+        Schema::dropIfExists('order_items');
+        Schema::dropIfExists('orders');
+
+        $response = $this->getJson('/api/admin/dashboard');
+
+        $response->assertOk()
+            ->assertJsonPath('data.stats.0.value', 0)
+            ->assertJsonPath('data.recent_orders', [])
+            ->assertJsonPath('data.top_products', []);
+    }
+
+    public function test_it_uses_recent_days_comparison_for_past_ranges(): void
+    {
+        $this->freezeNow();
+        $this->seedDashboardData();
+
+        $start = Carbon::create(2025, 4, 15)->format('Y-m-d');
+        $end = Carbon::create(2025, 5, 15)->format('Y-m-d');
+
+        $response = $this->getJson("/api/admin/dashboard?start_date={$start}&end_date={$end}");
+
+        $days = Carbon::parse($start)->diffInDays(Carbon::parse($end)) + 1;
+        $comparisonEnd = Carbon::now()->copy()->endOfDay();
+        $comparisonStart = $comparisonEnd->copy()->subDays($days - 1)->startOfDay();
+
+        $response->assertOk()
+            ->assertJsonPath('data.comparison_range.source', 'recent_days')
+            ->assertJsonPath('data.comparison_range.start', $comparisonStart->toDateString())
+            ->assertJsonPath('data.comparison_range.end', $comparisonEnd->toDateString())
+            ->assertJsonPath('data.comparison_range.days', $days);
+
+        $this->assertStringContainsString((string) $days, (string) $response->json('data.comparison_note'));
+    }
+
+    public function test_it_honors_manual_comparison_range(): void
+    {
+        $this->freezeNow();
+        $this->seedDashboardData();
+
+        $currentStart = Carbon::create(2025, 10, 16)->format('Y-m-d');
+        $currentEnd = Carbon::create(2025, 11, 16)->format('Y-m-d');
+        $comparisonStart = Carbon::create(2025, 9, 1)->format('Y-m-d');
+        $comparisonEnd = Carbon::create(2025, 9, 15)->format('Y-m-d');
+
+        $url = sprintf(
+            '/api/admin/dashboard?start_date=%s&end_date=%s&comparison_start_date=%s&comparison_end_date=%s',
+            $currentStart,
+            $currentEnd,
+            $comparisonStart,
+            $comparisonEnd
+        );
+
+        $response = $this->getJson($url);
+
+        $this->assertEquals('manual', $response->json('data.comparison_range.source'));
+        $this->assertEquals($comparisonStart, $response->json('data.comparison_range.start'));
+        $this->assertEquals($comparisonEnd, $response->json('data.comparison_range.end'));
+        $this->assertEquals(15, $response->json('data.comparison_range.days'));
+        $this->assertStringContainsString('manualmente', (string) $response->json('data.comparison_note'));
+    }
+
+    private function freezeNow(): Carbon
+    {
+        $now = Carbon::create(2025, 11, 16, 12);
+        Carbon::setTestNow($now);
+
+        return $now;
+    }
+
+    /**
+     * Seed a default dataset that mixes current and previous period data.
+     *
+     * @return array<string, int>
+     */
+    private function seedDashboardData(): array
     {
         $now = Carbon::now();
 
@@ -152,38 +296,10 @@ class DashboardControllerTest extends TestCase
             'created_at' => $now->copy()->subMonths(1)->addDays(5),
         ]);
 
-        $response = $this->getJson('/api/admin/dashboard');
-
-        $response->assertOk();
-
-        $response->assertJsonPath('data.stats.0.key', 'orders');
-        $response->assertJsonPath('data.stats.0.value', 3);
-        $response->assertJsonPath('data.stats.0.extra.awaiting_fulfillment', 3);
-
-        $response->assertJsonPath('data.stats.3.key', 'revenue');
-        $response->assertJsonPath('data.stats.3.value', 430.5);
-        $response->assertJsonPath('data.stats.3.extra.average_order_value', 215.25);
-
-        $response->assertJsonPath('data.inventory.category_count', 1);
-        $response->assertJsonPath('data.inventory.low_stock_count', 1);
-
-        $response->assertJsonCount(3, 'data.recent_orders');
-        $response->assertJsonPath('data.recent_orders.0.id', $pendingOrderId);
-
-        $response->assertJsonPath('data.top_products.0.product_id', $recentProduct->id);
-        $response->assertJsonPath('data.top_products.0.quantity_sold', 3);
-    }
-
-    public function test_it_handles_missing_order_tables(): void
-    {
-        Schema::dropIfExists('order_items');
-        Schema::dropIfExists('orders');
-
-        $response = $this->getJson('/api/admin/dashboard');
-
-        $response->assertOk()
-            ->assertJsonPath('data.stats.0.value', 0)
-            ->assertJsonPath('data.recent_orders', [])
-            ->assertJsonPath('data.top_products', []);
+        return [
+            'pendingOrderId' => $pendingOrderId,
+            'previousOrderId' => $previousOrderId,
+            'recentProductId' => $recentProduct->id,
+        ];
     }
 }

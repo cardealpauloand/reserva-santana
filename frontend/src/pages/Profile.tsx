@@ -170,7 +170,7 @@ const Profile = () => {
     }
   };
 
-  const handleDeleteAddress = async (id: number) => {
+  const handleDeleteAddress = async (id: string) => {
     if (!confirm("Deseja realmente excluir este endereço?")) return;
 
     try {
