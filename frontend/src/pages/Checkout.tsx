@@ -17,11 +17,8 @@ import {
   Plus,
   Check,
   CreditCard,
-  QrCode,
-  Barcode,
   Truck,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -36,10 +33,7 @@ import { getShippingQuotes, type ShippingQuote } from "@/services/shipping";
 
 type SavedAddress = Address;
 
-type PaymentMethod = "pix" | "credit_card" | "boleto";
-
 interface PaymentData {
-  method: PaymentMethod;
   installments: string;
   cardName: string;
   cardNumber: string;
@@ -62,37 +56,8 @@ const checkoutSteps = [
   },
 ];
 
-const paymentMethods: Array<{
-  value: PaymentMethod;
-  label: string;
-  description: string;
-  icon: LucideIcon;
-}> = [
-  {
-    value: "pix",
-    label: "PIX",
-    description: "Pagamento instantâneo com confirmação imediata",
-    icon: QrCode,
-  },
-  {
-    value: "credit_card",
-    label: "Cartão de Crédito",
-    description: "Parcele em até 12x sem juros",
-    icon: CreditCard,
-  },
-  {
-    value: "boleto",
-    label: "Boleto Bancário",
-    description: "Compensação em até 2 dias úteis",
-    icon: Barcode,
-  },
-];
-
-const paymentMethodLabels: Record<PaymentMethod, string> = {
-  pix: "PIX",
-  credit_card: "Cartão de Crédito",
-  boleto: "Boleto Bancário",
-};
+const CARD_PAYMENT_LABEL = "Cartão de Crédito";
+const CARD_PAYMENT_DESCRIPTION = "Parcele em até 12x sem juros";
 
 const formatCardNumber = (value: string) =>
   value
@@ -143,7 +108,6 @@ const Checkout = () => {
   const [selectedShipping, setSelectedShipping] =
     useState<ShippingQuote | null>(null);
   const [paymentData, setPaymentData] = useState<PaymentData>({
-    method: "pix",
     installments: "1",
     cardName: "",
     cardNumber: "",
@@ -269,18 +233,6 @@ const Checkout = () => {
     }
   }, [formData.zipCode, fetchQuotes, items.length]);
 
-  const handlePaymentMethodChange = (value: PaymentMethod) => {
-    setPaymentData((prev) => ({
-      ...prev,
-      method: value,
-      installments: value === "credit_card" ? prev.installments : "1",
-      cardName: value === "credit_card" ? prev.cardName : "",
-      cardNumber: value === "credit_card" ? prev.cardNumber : "",
-      cardExpiration: value === "credit_card" ? prev.cardExpiration : "",
-      cardCvv: value === "credit_card" ? prev.cardCvv : "",
-    }));
-  };
-
   const handlePaymentFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPaymentData((prev) => ({
@@ -329,10 +281,6 @@ const Checkout = () => {
   };
 
   const validatePaymentStep = () => {
-    if (paymentData.method !== "credit_card") {
-      return true;
-    }
-
     const requiredFields: Array<{ key: keyof PaymentData; label: string }> = [
       { key: "cardName", label: "o nome impresso no cartão" },
       { key: "cardNumber", label: "o número do cartão" },
@@ -478,12 +426,9 @@ const Checkout = () => {
 
       clearCart();
 
-      const paymentSummary =
-        paymentData.method === "credit_card"
-          ? `${
-              paymentMethodLabels[paymentData.method]
-            } final ${getCardLastDigits(paymentData.cardNumber)}`
-          : paymentMethodLabels[paymentData.method];
+      const paymentSummary = `${CARD_PAYMENT_LABEL} final ${getCardLastDigits(
+        paymentData.cardNumber
+      )}`;
 
       toast({
         title: "Pedido realizado!",
@@ -850,138 +795,89 @@ const Checkout = () => {
 
                   {currentStep === 1 && (
                     <div className="space-y-6">
-                      <div className="space-y-4">
-                        <Label className="text-base font-semibold">
-                          Escolha a forma de pagamento
-                        </Label>
-                        <RadioGroup
-                          value={paymentData.method}
-                          onValueChange={(value) =>
-                            handlePaymentMethodChange(value as PaymentMethod)
-                          }
-                        >
-                          {paymentMethods.map((method) => {
-                            const Icon = method.icon;
-                            return (
-                              <div
-                                key={method.value}
-                                className="flex items-start gap-3 rounded-lg border border-border/80 p-4 hover:border-primary/60 transition-colors"
-                              >
-                                <RadioGroupItem
-                                  value={method.value}
-                                  id={method.value}
-                                />
-                                <Label
-                                  htmlFor={method.value}
-                                  className="flex-1 cursor-pointer space-y-1 font-normal"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <Icon className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium text-foreground">
-                                      {method.label}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground">
-                                    {method.description}
-                                  </p>
-                                </Label>
-                              </div>
-                            );
-                          })}
-                        </RadioGroup>
+                      <div className="rounded-lg border border-border/80 p-4 flex flex-col gap-3">
+                        <div className="flex items-center gap-3">
+                          <CreditCard className="h-5 w-5 text-primary" />
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">
+                              {CARD_PAYMENT_LABEL}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {CARD_PAYMENT_DESCRIPTION}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          O pagamento é autorizado automaticamente após confirmar o
+                          pedido.
+                        </p>
                       </div>
 
-                      {paymentData.method === "credit_card" && (
-                        <div className="space-y-4">
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="cardName">Nome impresso no cartão</Label>
+                          <Input
+                            id="cardName"
+                            name="cardName"
+                            value={paymentData.cardName}
+                            onChange={handlePaymentFieldChange}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="cardNumber">Número do cartão</Label>
+                          <Input
+                            id="cardNumber"
+                            name="cardNumber"
+                            inputMode="numeric"
+                            value={paymentData.cardNumber}
+                            onChange={handlePaymentFieldChange}
+                            placeholder="0000 0000 0000 0000"
+                          />
+                        </div>
+
+                        <div className="grid md:grid-cols-3 gap-4">
                           <div>
-                            <Label htmlFor="cardName">
-                              Nome impresso no cartão
-                            </Label>
+                            <Label htmlFor="cardExpiration">Validade</Label>
                             <Input
-                              id="cardName"
-                              name="cardName"
-                              value={paymentData.cardName}
-                              onChange={handlePaymentFieldChange}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="cardNumber">Número do cartão</Label>
-                            <Input
-                              id="cardNumber"
-                              name="cardNumber"
+                              id="cardExpiration"
+                              name="cardExpiration"
                               inputMode="numeric"
-                              value={paymentData.cardNumber}
+                              value={paymentData.cardExpiration}
                               onChange={handlePaymentFieldChange}
-                              placeholder="0000 0000 0000 0000"
+                              placeholder="MM/AA"
                             />
                           </div>
-
-                          <div className="grid md:grid-cols-3 gap-4">
-                            <div>
-                              <Label htmlFor="cardExpiration">Validade</Label>
-                              <Input
-                                id="cardExpiration"
-                                name="cardExpiration"
-                                inputMode="numeric"
-                                value={paymentData.cardExpiration}
-                                onChange={handlePaymentFieldChange}
-                                placeholder="MM/AA"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="cardCvv">CVV</Label>
-                              <Input
-                                id="cardCvv"
-                                name="cardCvv"
-                                inputMode="numeric"
-                                value={paymentData.cardCvv}
-                                onChange={handlePaymentFieldChange}
-                                placeholder="000"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="installments">Parcelas</Label>
-                              <Select
-                                value={paymentData.installments}
-                                onValueChange={handleInstallmentsChange}
-                              >
-                                <SelectTrigger id="installments">
-                                  <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="1">À vista</SelectItem>
-                                  <SelectItem value="2">
-                                    2x sem juros
-                                  </SelectItem>
-                                  <SelectItem value="3">
-                                    3x sem juros
-                                  </SelectItem>
-                                  <SelectItem value="6">
-                                    6x sem juros
-                                  </SelectItem>
-                                  <SelectItem value="12">
-                                    12x sem juros
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                          <div>
+                            <Label htmlFor="cardCvv">CVV</Label>
+                            <Input
+                              id="cardCvv"
+                              name="cardCvv"
+                              inputMode="numeric"
+                              value={paymentData.cardCvv}
+                              onChange={handlePaymentFieldChange}
+                              placeholder="000"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="installments">Parcelas</Label>
+                            <Select
+                              value={paymentData.installments}
+                              onValueChange={handleInstallmentsChange}
+                            >
+                              <SelectTrigger id="installments">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="1">À vista</SelectItem>
+                                <SelectItem value="2">2x sem juros</SelectItem>
+                                <SelectItem value="3">3x sem juros</SelectItem>
+                                <SelectItem value="6">6x sem juros</SelectItem>
+                                <SelectItem value="12">12x sem juros</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
-                      )}
-
-                      {paymentData.method === "pix" && (
-                        <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 text-sm text-muted-foreground">
-                          O código PIX será exibido após a confirmação do
-                          pedido.
-                        </div>
-                      )}
-
-                      {paymentData.method === "boleto" && (
-                        <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 text-sm text-muted-foreground">
-                          O boleto será enviado para o seu email e terá validade
-                          de 2 dias úteis.
-                        </div>
-                      )}
+                      </div>
 
                       <div className="flex items-center justify-between pt-4">
                         <Button
@@ -1050,27 +946,17 @@ const Checkout = () => {
                           )}
                         </div>
                         <div className="text-sm text-muted-foreground space-y-1">
-                          <p>{paymentMethodLabels[paymentData.method]}</p>
-                          {paymentData.method === "credit_card" && (
-                            <p>
-                              Cartão final{" "}
-                              {getCardLastDigits(paymentData.cardNumber)} ·{" "}
-                              {paymentData.installments === "1"
-                                ? "À vista"
-                                : `${paymentData.installments}x sem juros`}
-                            </p>
-                          )}
-                          {paymentData.method === "pix" && (
-                            <p>
-                              A confirmação é imediata após o pagamento do PIX.
-                            </p>
-                          )}
-                          {paymentData.method === "boleto" && (
-                            <p>
-                              O boleto será enviado por email após finalizar o
-                              pedido.
-                            </p>
-                          )}
+                          <p>{CARD_PAYMENT_LABEL}</p>
+                          <p>
+                            Cartão final {getCardLastDigits(paymentData.cardNumber)} ·{" "}
+                            {paymentData.installments === "1"
+                              ? "À vista"
+                              : `${paymentData.installments}x sem juros`}
+                          </p>
+                          <p>
+                            A autorização acontece automaticamente e o pedido já
+                            entra como confirmado.
+                          </p>
                         </div>
                       </div>
 
@@ -1167,27 +1053,14 @@ const Checkout = () => {
                       Pagamento
                     </p>
                     <p className="font-medium text-foreground mt-1">
-                      {paymentMethodLabels[paymentData.method]}
+                      {CARD_PAYMENT_LABEL}
                     </p>
-                    {paymentData.method === "credit_card" && (
-                      <p className="text-muted-foreground mt-1">
-                        Cartão final {getCardLastDigits(paymentData.cardNumber)}{" "}
-                        ·{" "}
-                        {paymentData.installments === "1"
-                          ? "À vista"
-                          : `${paymentData.installments}x sem juros`}
-                      </p>
-                    )}
-                    {paymentData.method === "pix" && (
-                      <p className="text-muted-foreground mt-1">
-                        Código PIX disponível após confirmação
-                      </p>
-                    )}
-                    {paymentData.method === "boleto" && (
-                      <p className="text-muted-foreground mt-1">
-                        Boleto enviado por email após o pedido
-                      </p>
-                    )}
+                    <p className="text-muted-foreground mt-1">
+                      Cartão final {getCardLastDigits(paymentData.cardNumber)} ·{" "}
+                      {paymentData.installments === "1"
+                        ? "À vista"
+                        : `${paymentData.installments}x sem juros`}
+                    </p>
                   </div>
 
                   <div className="space-y-2 border-t border-border pt-3">

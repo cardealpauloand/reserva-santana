@@ -78,7 +78,7 @@ class OrderController extends Controller
                 'tax_total' => 0,
                 'grand_total' => $total,
                 'total' => $total,
-                'status' => 'pending_payment',
+                'status' => 'paid',
                 'created_by' => $user->id,
             ]);
 
