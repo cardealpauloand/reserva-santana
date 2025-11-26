@@ -26,6 +26,7 @@ class AddressController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
+            'phone' => ['nullable', 'string', 'max:20', 'regex:/^\D*(\d\D*){10,11}$/'],
             // CEP must be 8 digits (allow formatted input but validate digits)
             'zip_code' => ['required', 'string', 'max:10', 'regex:/^\D*(\d\D*){8}$/'],
             'street' => 'required|string|max:255',
@@ -55,6 +56,7 @@ class AddressController extends Controller
 
         $address = $user->addresses()->create([
             'name' => $request->name,
+            'phone' => $request->input('phone'),
             'zip_code' => $request->zip_code,
             'street' => $request->street,
             'number' => $request->number,

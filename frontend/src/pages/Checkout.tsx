@@ -91,7 +91,7 @@ const Checkout = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: user?.email || "",
-    phone: "",
+    phone: user?.profile?.phone || "",
     zipCode: "",
     street: "",
     number: "",
@@ -117,10 +117,11 @@ const Checkout = () => {
 
   const fillFormWithAddress = useCallback(
     (address: SavedAddress) => {
-      setFormData({
+      setFormData((prev) => ({
+        ...prev,
         name: address.name,
         email: user?.email || "",
-        phone: "",
+        phone: address.phone || prev.phone || user?.profile?.phone || "",
         zipCode: address.zip_code,
         street: address.street,
         number: address.number,
@@ -128,9 +129,9 @@ const Checkout = () => {
         neighborhood: address.neighborhood,
         city: address.city,
         state: address.state,
-      });
+      }));
     },
-    [user?.email]
+    [user?.email, user?.profile?.phone]
   );
 
   const loadSavedAddresses = useCallback(async () => {
@@ -173,7 +174,7 @@ const Checkout = () => {
       setFormData({
         name: "",
         email: user?.email || "",
-        phone: "",
+        phone: user?.profile?.phone || "",
         zipCode: "",
         street: "",
         number: "",
@@ -390,6 +391,7 @@ const Checkout = () => {
         try {
           await addressesService.createAddress({
             name: formData.name,
+            phone: formData.phone,
             zip_code: formData.zipCode,
             street: formData.street,
             number: formData.number,

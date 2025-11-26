@@ -35,6 +35,7 @@ const Profile = () => {
 
   const [newAddress, setNewAddress] = useState({
     name: "",
+    phone: "",
     zip_code: "",
     street: "",
     number: "",
@@ -136,6 +137,18 @@ const Profile = () => {
     e.preventDefault();
     if (!user) return;
 
+    if (newAddress.phone) {
+      const digits = newAddress.phone.replace(/\D+/g, "");
+      if (digits.length < 10 || digits.length > 11) {
+        toast({
+          title: "Telefone inválido",
+          description: "Informe um telefone com DDD (10 ou 11 dígitos).",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       await addressesService.createAddress(newAddress);
@@ -147,6 +160,7 @@ const Profile = () => {
 
       setNewAddress({
         name: "",
+        phone: "",
         zip_code: "",
         street: "",
         number: "",
@@ -300,6 +314,17 @@ const Profile = () => {
                     />
                   </div>
 
+                  <div>
+                    <Label htmlFor="addr_phone">Telefone</Label>
+                    <Input
+                      id="addr_phone"
+                      validate="phone"
+                      value={newAddress.phone}
+                      onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
+                      placeholder="(11) 99999-9999"
+                    />
+                  </div>
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label htmlFor="zip_code">CEP</Label>
@@ -428,6 +453,9 @@ const Profile = () => {
                       {address.neighborhood}, {address.city} - {address.state}
                     </p>
                     <p className="text-sm text-muted-foreground">CEP: {address.zip_code}</p>
+                    {address.phone && (
+                      <p className="text-sm text-muted-foreground">Contato: {address.phone}</p>
+                    )}
                   </div>
                 ))
               )}
