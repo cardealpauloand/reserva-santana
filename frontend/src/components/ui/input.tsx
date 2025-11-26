@@ -68,6 +68,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           inputRef.current = node;
         }}
         type={type}
+        value={value}
+        defaultValue={defaultValue}
         inputMode={mode}
         pattern={pattern}
         className={cn(

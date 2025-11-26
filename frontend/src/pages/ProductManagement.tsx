@@ -57,16 +57,23 @@ interface FormState {
   description: string;
 }
 
-const TYPE_OPTIONS = ["Tinto", "Branco", "Rosé", "Espumante"] as const;
-type ProductTypeOption = (typeof TYPE_OPTIONS)[number];
-const DEFAULT_PRODUCT_TYPE = TYPE_OPTIONS[0];
+const BASE_TYPE_OPTIONS = ["Tinto", "Branco", "Rosé", "Espumante"];
+const DEFAULT_PRODUCT_TYPE = BASE_TYPE_OPTIONS[0];
 
-const isTypeOption = (value: string | null | undefined): value is ProductTypeOption => {
-  if (!value) {
-    return false;
+const normalizeType = (value: string | null | undefined): string => {
+  return value?.trim() || DEFAULT_PRODUCT_TYPE;
+};
+
+const buildTypeOptions = (items: AdminProduct[]): string[] => {
+  const options = new Set(BASE_TYPE_OPTIONS);
+
+  for (const product of items) {
+    if (product.type) {
+      options.add(product.type);
+    }
   }
 
-  return TYPE_OPTIONS.includes(value as ProductTypeOption);
+  return Array.from(options);
 };
 
 const createInitialFormState = (): FormState => ({
@@ -79,8 +86,19 @@ const createInitialFormState = (): FormState => ({
   description: "",
 });
 
+const fillFormFromProduct = (product: AdminProduct): FormState => ({
+  name: product.name,
+  origin: product.origin ?? "",
+  type: normalizeType(product.type),
+  price: product.price.toString(),
+  rating: product.rating !== null ? product.rating.toString() : "",
+  imageUrl: product.imageUrl ?? "",
+  description: product.description ?? "",
+});
+
 const ProductManagement = () => {
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [typeOptions, setTypeOptions] = useState<string[]>(BASE_TYPE_OPTIONS);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
@@ -99,6 +117,7 @@ const ProductManagement = () => {
 
         const data = await listAdminProducts();
         setProducts(data);
+        setTypeOptions(buildTypeOptions(data));
       } catch (error) {
         const message =
           error instanceof Error
@@ -123,22 +142,22 @@ const ProductManagement = () => {
     void fetchProducts(true);
   }, [fetchProducts]);
 
+  useEffect(() => {
+    if (!dialogOpen) {
+      return;
+    }
+
+    if (editingProduct) {
+      setFormData(fillFormFromProduct(editingProduct));
+    } else {
+      resetForm();
+    }
+  }, [dialogOpen, editingProduct]);
+
   const handleOpenDialog = (product?: AdminProduct) => {
     if (product) {
-      const normalizedType = isTypeOption(product.type)
-        ? product.type
-        : DEFAULT_PRODUCT_TYPE;
-
       setEditingProduct(product);
-      setFormData({
-        name: product.name,
-        origin: product.origin ?? "",
-        type: normalizedType,
-        price: product.price.toString(),
-        rating: product.rating !== null ? product.rating.toString() : "",
-        imageUrl: product.imageUrl ?? "",
-        description: product.description ?? "",
-      });
+      setFormData(fillFormFromProduct(product));
     } else {
       setEditingProduct(null);
       resetForm();
@@ -408,7 +427,7 @@ const ProductManagement = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TYPE_OPTIONS.map((option) => (
+                  {typeOptions.map((option) => (
                     <SelectItem key={option} value={option}>
                       {option}
                     </SelectItem>
