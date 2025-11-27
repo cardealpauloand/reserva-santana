@@ -223,6 +223,7 @@ const Dashboard = () => {
               hasComparisonRange={hasComparisonRange}
               emptyPrimaryMessage="Nenhuma venda registrada até o momento."
               emptyComparisonMessage="Nenhum produto com vendas no período comparativo."
+              showActiveLabel={false}
             />
             <TopBreakdownCard
               title="Tipos mais Vendidos"
@@ -235,6 +236,7 @@ const Dashboard = () => {
               hasComparisonRange={hasComparisonRange}
               emptyPrimaryMessage="Nenhuma venda registrada para tipos ainda."
               emptyComparisonMessage="Nenhum tipo com vendas no período comparativo."
+              showActiveLabel={false}
             />
           </div>
 
@@ -245,6 +247,7 @@ const Dashboard = () => {
             hasComparisonRange={hasComparisonRange}
             primaryLabel={summaryData.selectedRange.label}
             comparisonLabel={summaryData.comparisonRange.label}
+            showActiveLabel={false}
           />
         </div>
       </main>
