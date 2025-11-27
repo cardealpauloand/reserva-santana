@@ -5,12 +5,10 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+    
     public function up(): void
     {
-        // Update trigger function to remove 'changed_at' column which doesn't exist
+        
         DB::unprepared("
             CREATE OR REPLACE FUNCTION audit_product_price_change()
             RETURNS TRIGGER AS $$
@@ -29,12 +27,10 @@ return new class extends Migration
         ");
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
     public function down(): void
     {
-        // Revert to the previous version (which was broken, but this is the correct revert behavior)
+        
         DB::unprepared("
             CREATE OR REPLACE FUNCTION audit_product_price_change()
             RETURNS TRIGGER AS $$

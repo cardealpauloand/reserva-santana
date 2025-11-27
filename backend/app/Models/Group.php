@@ -12,14 +12,10 @@ class Group extends Model
     use HasFactory;
     use SoftDeletes;
 
-    /**
-     * The attributes that aren't mass assignable.
-     */
+    
     protected $guarded = [];
 
-    /**
-     * Categories that belong to this group.
-     */
+    
     public function categories(): HasMany
     {
         return $this->hasMany(Category::class);

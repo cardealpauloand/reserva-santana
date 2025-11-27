@@ -13,9 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class InventoryService
 {
-    /**
-     * Register a stock movement for a product and keep aggregates in sync.
-     */
+    
     public function registerProductMovement(
         int $productId,
         int $quantity,
@@ -100,17 +98,13 @@ class InventoryService
         });
     }
 
-    /**
-     * Resolve or create the requested movement type.
-     */
+    
     private function resolveMovementType(string $movementType): TypeMovement
     {
         return TypeMovement::query()->firstOrCreate(['name' => $movementType]);
     }
 
-    /**
-     * Resolve the target warehouse, defaulting to the main store.
-     */
+    
     private function resolveWarehouse(?int $warehouseId): Warehouse
     {
         if ($warehouseId) {

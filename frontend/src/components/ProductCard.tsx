@@ -18,20 +18,20 @@ export const ProductCard = ({ product, fallbackType }: ProductCardProps) => {
   const { addItem, items } = useCart();
   const { name, origin, type, price, originalPrice, rating, categories } = product;
 
-  // Prefer explicit product.type, otherwise fall back to the first category's type or name
+  
   const rawType = type ?? fallbackType ?? categories?.[0]?.type ?? categories?.[0]?.name ?? null;
 
-  // Normalize common category names so "Vinhos Tintos" or "Tintos" -> "Tinto"
+  
   const displayType = rawType
     ? (() => {
         let t = String(rawType).trim();
-        // remove common prefixes like "Vinhos "
+        
         t = t.replace(/^vinhos\s+/i, "");
-        // naive singularization: if ends with 's' (Portuguese plural), drop it
+        
         if (t.length > 1 && /s$/i.test(t)) {
           t = t.slice(0, -1);
         }
-        // capitalize first letter, leave rest as-is
+        
         return t.charAt(0).toUpperCase() + t.slice(1);
       })()
     : null;
@@ -94,7 +94,7 @@ export const ProductCard = ({ product, fallbackType }: ProductCardProps) => {
       )}
     >
       <Link to={`/produto/${product.id}`}>
-        {/* Image container with proper padding to show full image */}
+        {}
         <div className="w-full">
           <div className="relative bg-white rounded-md flex items-center justify-center h-48 p-2">
           {discount > 0 && (
@@ -116,7 +116,7 @@ export const ProductCard = ({ product, fallbackType }: ProductCardProps) => {
               loading="lazy"
               className="max-h-full w-auto object-contain"
             />
-            {/* Removed gradient overlay to keep clean white background */}
+            {}
           </div>
         </div>
       </Link>

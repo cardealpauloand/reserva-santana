@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { ValidateKind, getInputMode, getPattern, sanitizeValue } from "@/lib/validators";
 
 type InputProps = React.ComponentProps<"input"> & {
-  validate?: ValidateKind; // Enables custom validation/sanitization
+  validate?: ValidateKind; 
   onValidationChange?: (valid: boolean) => void;
 };
 
@@ -36,9 +36,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const blockInvalid = (text: string) => {
       if (!validate) return false;
       const before = inputRef.current?.value ?? "";
-      // Simulate insertion at caret by appending; good enough for restriction
+      
       const next = sanitizeValue(before + text, validate);
-      return before + text !== next; // if sanitization changed it, block
+      return before + text !== next; 
     };
 
     const handlePaste: React.ClipboardEventHandler<HTMLInputElement> = (e) => {
@@ -92,7 +92,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ];
           if (controlKeys.includes(e.key)) return onKeyDown?.(e);
 
-          // Block E,e,+,- for number/integer
+          
           if ((validate === "number" || validate === "integer") && ["e", "E", "+", "-"].includes(e.key)) {
             e.preventDefault();
             return;
@@ -109,7 +109,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               e.preventDefault();
               return;
             }
-            // allow only one dot
+            
             if ((e.key === "." || e.key === ",") && /[\.,]/.test(current)) {
               e.preventDefault();
               return;

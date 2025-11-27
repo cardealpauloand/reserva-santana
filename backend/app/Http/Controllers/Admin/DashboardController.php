@@ -13,9 +13,7 @@ class DashboardController extends Controller
     {
     }
 
-    /**
-     * Return an overview of admin dashboard metrics.
-     */
+    
     public function __invoke(Request $request): JsonResponse
     {
         return response()->json([

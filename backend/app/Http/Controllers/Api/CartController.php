@@ -14,9 +14,7 @@ use Illuminate\Support\Facades\Validator;
 
 class CartController extends Controller
 {
-    /**
-     * Display the authenticated user's cart.
-     */
+    
     public function show(Request $request): CartResource
     {
         $cart = $this->resolveUserCart($request);
@@ -30,9 +28,7 @@ class CartController extends Controller
         return new CartResource($cart);
     }
 
-    /**
-     * Replace the cart items with the provided payload.
-     */
+    
     public function sync(Request $request): CartResource|JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -71,9 +67,7 @@ class CartController extends Controller
         return new CartResource($cart);
     }
 
-    /**
-     * Clear all cart items.
-     */
+    
     public function clear(Request $request): CartResource
     {
         $cart = $this->resolveUserCart($request);
@@ -90,9 +84,7 @@ class CartController extends Controller
         return new CartResource($cart);
     }
 
-    /**
-     * Retrieve or create a cart for the authenticated user.
-     */
+    
     protected function resolveUserCart(Request $request): Cart
     {
         $user = $request->user();
@@ -102,12 +94,7 @@ class CartController extends Controller
         ]);
     }
 
-    /**
-     * Insert the provided items into the cart.
-     *
-     * @param  \App\Models\Cart  $cart
-     * @param  \Illuminate\Support\Collection<int, array<string, mixed>>  $items
-     */
+    
     protected function upsertItems(Cart $cart, Collection $items): void
     {
         $grouped = $items

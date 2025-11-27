@@ -26,7 +26,7 @@ export const ADMIN_ORDER_STATUS_META: Record<
   shipped: { label: "Enviado", badgeVariant: "outline" },
   delivered: { label: "Entregue", badgeVariant: "default" },
   canceled: { label: "Cancelado", badgeVariant: "destructive" },
-  cancelled: { label: "Cancelado", badgeVariant: "destructive" }, // compat
+  cancelled: { label: "Cancelado", badgeVariant: "destructive" }, 
   refunded: { label: "Reembolsado", badgeVariant: "secondary" },
 };
 
@@ -60,7 +60,7 @@ export type AdminOrder = {
   items: AdminOrderItem[];
 };
 
-// -- Helpers ---------------------------------------------------------------
+
 
 function mapShippingAddress(
   record: any | null | undefined
@@ -88,7 +88,7 @@ function mapShippingAddress(
 }
 
 function mapOrder(order: Order & any): AdminOrder {
-  // Aceita tanto snake_case quanto camelCase vindos da API
+  
   return {
     id: Number(order.id),
     userId: Number(order.user_id ?? order.userId),
@@ -103,7 +103,7 @@ function mapOrder(order: Order & any): AdminOrder {
   };
 }
 
-// -- API -------------------------------------------------------------------
+
 
 export async function listAdminOrders(): Promise<AdminOrder[]> {
   const orders = await apiFetch<Order[]>("/admin/orders", {

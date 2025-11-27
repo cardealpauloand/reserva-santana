@@ -9,7 +9,7 @@ export type ValidateKind =
   | "letters"
   | "alphanumeric";
 
-// Basic validators/sanitizers tailored for BR use cases (CEP, phone, UF)
+
 export function sanitizeValue(value: string, kind?: ValidateKind): string {
   if (!kind) return value;
   switch (kind) {
@@ -18,11 +18,11 @@ export function sanitizeValue(value: string, kind?: ValidateKind): string {
       return digits;
     }
     case "number": {
-      // Allow digits and one decimal separator (dot or comma -> dot)
+      
       let v = value.replace(/,/g, ".");
-      // Remove invalid chars
+      
       v = v.replace(/[^0-9.]/g, "");
-      // Keep only first dot
+      
       const firstDot = v.indexOf(".");
       if (firstDot !== -1) {
         v = v.slice(0, firstDot + 1) + v.slice(firstDot + 1).replace(/\./g, "");
@@ -30,27 +30,27 @@ export function sanitizeValue(value: string, kind?: ValidateKind): string {
       return v;
     }
     case "email": {
-      // Trim spaces and lowercase, remove illegal spaces
+      
       return value.trim().toLowerCase().replace(/\s+/g, "");
     }
     case "date": {
-      // Allow digits and separators - or /
+      
       return value.replace(/[^0-9/\-]/g, "");
     }
     case "cep": {
-      // Only 8 digits
+      
       return value.replace(/\D+/g, "").slice(0, 8);
     }
     case "phone": {
-      // BR phone: 10-11 digits, cap at 11
+      
       return value.replace(/\D+/g, "").slice(0, 11);
     }
     case "state": {
-      // UF: two letters only
+      
       return value.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 2);
     }
     case "letters": {
-      // Letters (including accented) and spaces
+      
       return value.replace(/[^\p{L} ]+/gu, "");
     }
     case "alphanumeric": {
@@ -85,10 +85,10 @@ export function getPattern(kind?: ValidateKind): string | undefined {
     case "number":
       return "^\\d+(\\.\\d+)?$";
     case "email":
-      // Simple but safe email pattern
+      
       return "^[^\s@]+@[^\s@]+\\.[^\s@]+$";
     case "date":
-      // Accept dd/mm/yyyy or yyyy-mm-dd
+      
       return "^(?:\\d{2}/\\d{2}/\\d{4}|\\d{4}-\\d{2}-\\d{2})$";
     case "cep":
       return "^\\d{8}$";

@@ -181,11 +181,7 @@ class DashboardControllerTest extends TestCase
         return $now;
     }
 
-    /**
-     * Seed a default dataset that mixes current and previous period data.
-     *
-     * @return array<string, int>
-     */
+    
     private function seedDashboardData(): array
     {
         $now = Carbon::now();

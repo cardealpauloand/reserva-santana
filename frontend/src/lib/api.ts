@@ -9,10 +9,10 @@ async function handleResponse<T>(response: Response): Promise<T> {
   const isJson = contentType && contentType.includes("application/json");
 
   if (!response.ok) {
-    // Handle 401 Unauthorized - clear token and optionally redirect
+    
     if (response.status === 401) {
       localStorage.removeItem('auth_token');
-      // Optionally redirect to login - can be handled in AuthContext
+      
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));
     }
 
@@ -26,7 +26,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
   }
 
   if (!isJson) {
-    // @ts-expect-error -- allow returning empty payloads
+    
     return null;
   }
 
@@ -37,7 +37,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   const trimmedPath = path.replace(/^\//, "");
   const url = `${API_URL}/${trimmedPath}`;
 
-  // Get auth token from localStorage
+  
   const token = localStorage.getItem('auth_token');
 
   const { headers: optionHeaders, ...fetchOptions } = options;

@@ -10,9 +10,7 @@ use Illuminate\Support\Carbon;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Seed default application users.
-     */
+    
     public function run(): void
     {
         $startOfYear = now()->startOfYear();

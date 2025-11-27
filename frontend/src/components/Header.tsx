@@ -217,7 +217,7 @@ export const Header = () => {
         </div>
       </div>
 
-      {/* Mega Menu - Posicionado fixo abaixo do navbar */}
+      {}
       <div
         className={`fixed left-0 right-0 top-16 transition-all duration-200 z-40 ${
           activeMenu ? "opacity-100 visible" : "opacity-0 invisible"

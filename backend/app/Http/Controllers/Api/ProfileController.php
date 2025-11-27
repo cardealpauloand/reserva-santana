@@ -9,14 +9,12 @@ use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
 {
-    /**
-     * Get authenticated user's profile.
-     */
+    
     public function show(Request $request)
     {
         $user = $request->user();
 
-        // Auto-create profile if it doesn't exist
+        
         $profile = $user->profile;
 
         if (!$profile) {
@@ -29,14 +27,12 @@ class ProfileController extends Controller
         return response()->json($profile);
     }
 
-    /**
-     * Update authenticated user's profile.
-     */
+    
     public function update(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'full_name' => 'sometimes|string|max:255',
-            // BR phone ~ 10-11 digits (with or without formatting)
+            
             'phone' => ['nullable', 'string', 'max:20', 'regex:/^\D*(\d\D*){10,11}$/'],
         ]);
 
@@ -49,7 +45,7 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        // Auto-create profile if it doesn't exist
+        
         $profile = $user->profile;
 
         if (!$profile) {

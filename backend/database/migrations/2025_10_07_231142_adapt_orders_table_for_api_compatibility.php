@@ -7,22 +7,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+    
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            // Add 'total' column as alias/computed from grand_total
-            // This is for API compatibility with Supabase schema
+            
+            
             $table->decimal('total', 12, 2)->nullable()->after('grand_total');
 
-            // Add shipping_address as JSONB for simple API responses
-            // This complements the shipping_address_id foreign key
+            
+            
             $table->jsonb('shipping_address_data')->nullable()->after('shipping_address_id');
         });
 
-        // Create a trigger to auto-sync total from grand_total
+        
         DB::unprepared("
             CREATE OR REPLACE FUNCTION sync_order_total()
             RETURNS TRIGGER AS $$
@@ -39,9 +37,7 @@ return new class extends Migration
         ");
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
     public function down(): void
     {
         DB::unprepared("

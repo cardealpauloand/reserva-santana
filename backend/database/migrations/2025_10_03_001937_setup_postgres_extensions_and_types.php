@@ -5,9 +5,7 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+    
     public function up(): void
     {
         if (DB::getDriverName() !== 'pgsql') {
@@ -48,9 +46,7 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 SQL);
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
     public function down(): void
     {
         if (DB::getDriverName() !== 'pgsql') {

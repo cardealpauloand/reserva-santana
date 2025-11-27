@@ -6,11 +6,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration {
-    /**
-     * Additional category definitions keyed by slug.
-     *
-     * @var array<string, array<string, mixed>>
-     */
+    
     private array $categories = [
         'premium-reserva' => [
             'name' => 'Vinhos Reserva Premium',
@@ -46,9 +42,7 @@ return new class extends Migration {
         ],
     ];
 
-    /**
-     * Run the migrations.
-     */
+    
     public function up(): void
     {
         if (App::runningUnitTests()) {
@@ -96,9 +90,7 @@ return new class extends Migration {
         }
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
     public function down(): void
     {
         DB::table('categories')

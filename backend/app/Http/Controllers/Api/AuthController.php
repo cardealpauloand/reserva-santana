@@ -13,9 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * Register a new user.
-     */
+    
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -38,13 +36,13 @@ class AuthController extends Controller
                 'password' => Hash::make($request->password),
             ]);
 
-            // Create profile for user
+            
             Profile::create([
                 'user_id' => $user->id,
                 'full_name' => $request->name,
             ]);
 
-            // Assign default user role
+            
             UserRole::create([
                 'user_id' => $user->id,
                 'role' => 'user',
@@ -64,9 +62,7 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Login user.
-     */
+    
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -89,7 +85,7 @@ class AuthController extends Controller
             ]);
         }
 
-        // Revoke all previous tokens
+        
         $user->tokens()->delete();
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -100,9 +96,7 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Logout user (revoke token).
-     */
+    
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
@@ -112,15 +106,13 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Get authenticated user with roles.
-     */
+    
     public function user(Request $request)
     {
         $user = $request->user();
         $user->load(['profile', 'userRoles']);
 
-        // Add isAdmin flag to response
+        
         $user->is_admin = $user->isAdmin();
 
         return response()->json($user);

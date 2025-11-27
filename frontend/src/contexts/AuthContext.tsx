@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsAdmin(userData.is_admin);
     } catch (error) {
       console.error('Error loading user:', error);
-      // Clear invalid token
+      
       authService.clearToken();
       setUser(null);
       setSession(null);
@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     loadUser();
 
-    // Listen for unauthorized events from API
+    
     const handleUnauthorized = () => {
       setUser(null);
       setSession(null);

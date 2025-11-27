@@ -7,21 +7,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+    
     public function up(): void
     {
-        // Rename old warehouses table for backup
+        
         DB::statement('ALTER TABLE IF EXISTS warehouses RENAME TO warehouses_old');
 
-        // Rename old addresses table for backup
+        
         DB::statement('ALTER TABLE IF EXISTS addresses RENAME TO addresses_old');
 
-        // Drop the address_type enum if it exists
+        
         DB::statement('DROP TYPE IF EXISTS address_type CASCADE');
 
-        // Recreate addresses table with Supabase-compatible schema
+        
         Schema::create('addresses', function (Blueprint $table) {
             $table->uuid('id')->primary()->default(DB::raw('gen_random_uuid()'));
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
@@ -38,7 +36,7 @@ return new class extends Migration
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP'));
         });
 
-        // Create trigger for automatic timestamp updates
+        
         DB::unprepared("
             CREATE OR REPLACE FUNCTION update_addresses_updated_at()
             RETURNS TRIGGER AS $$
@@ -55,12 +53,10 @@ return new class extends Migration
         ");
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
     public function down(): void
     {
-        // Drop trigger and function
+        
         DB::unprepared("
             DROP TRIGGER IF EXISTS addresses_update_timestamp ON addresses;
             DROP FUNCTION IF EXISTS update_addresses_updated_at();
@@ -68,7 +64,7 @@ return new class extends Migration
 
         Schema::dropIfExists('addresses');
 
-        // Recreate original schema (simplified version)
+        
         DB::statement("CREATE TYPE address_type AS ENUM ('shipping', 'billing')");
 
         Schema::create('addresses', function (Blueprint $table) {

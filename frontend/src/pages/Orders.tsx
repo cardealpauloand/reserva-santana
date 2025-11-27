@@ -25,7 +25,7 @@ const statusLabels: Record<
   shipped: { label: "Enviado", variant: "outline" },
   delivered: { label: "Entregue", variant: "default" },
   canceled: { label: "Cancelado", variant: "destructive" },
-  cancelled: { label: "Cancelado", variant: "destructive" }, // compat
+  cancelled: { label: "Cancelado", variant: "destructive" }, 
   refunded: { label: "Reembolsado", variant: "secondary" },
 };
 
@@ -70,7 +70,7 @@ const Orders = () => {
     setLoading(true);
     try {
       const data = await ordersService.getOrders();
-      // Map shipping_address_data to shipping_address for compatibility
+      
       const mappedOrders = data.map((order: any) => ({
         ...order,
         shipping_address: order.shipping_address_data ?? order.shipping_address ?? null,
@@ -156,7 +156,7 @@ const Orders = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Order Items */}
+                  {}
                   <div>
                     <h4 className="font-semibold text-sm text-foreground mb-3">
                       Itens do Pedido
@@ -185,7 +185,7 @@ const Orders = () => {
                     </div>
                   </div>
 
-                  {/* Shipping Address */}
+                  {}
                   <div className="pt-4 border-t">
                     <h4 className="font-semibold text-sm text-foreground mb-2">
                       Endereço de Entrega

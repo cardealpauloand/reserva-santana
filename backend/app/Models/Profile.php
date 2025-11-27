@@ -23,9 +23,7 @@ class Profile extends Model
         'updated_at' => 'datetime',
     ];
 
-    /**
-     * Get the user that owns the profile.
-     */
+    
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

@@ -7,12 +7,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+    
     public function up(): void
     {
-        // Recreate warehouses table (simplified version without address FK)
+        
         Schema::create('warehouses', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name', 100);
@@ -21,7 +19,7 @@ return new class extends Migration
             $table->timestampTz('updated_at')->default(DB::raw('CURRENT_TIMESTAMP'));
         });
 
-        // Create default warehouse
+        
         DB::table('warehouses')->insert([
             'name' => 'Loja Principal',
             'code' => 'LOJA-PRINCIPAL',
@@ -37,9 +35,7 @@ return new class extends Migration
         ]);
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
     public function down(): void
     {
         Schema::dropIfExists('warehouses');

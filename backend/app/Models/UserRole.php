@@ -23,9 +23,7 @@ class UserRole extends Model
         'created_at' => 'datetime',
     ];
 
-    /**
-     * Get the user that owns the role.
-     */
+    
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

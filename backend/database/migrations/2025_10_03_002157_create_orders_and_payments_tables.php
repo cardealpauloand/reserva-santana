@@ -7,9 +7,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+    
     public function up(): void
     {
         if (DB::getDriverName() !== 'pgsql') {
@@ -162,9 +160,7 @@ return new class extends Migration
         DB::statement('ALTER TABLE return_items ADD CONSTRAINT return_items_quantity_check CHECK (quantity > 0)');
     }
 
-    /**
-     * Reverse the migrations.
-     */
+    
     public function down(): void
     {
         if (DB::getDriverName() !== 'pgsql') {

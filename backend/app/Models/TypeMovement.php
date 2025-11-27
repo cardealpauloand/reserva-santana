@@ -14,24 +14,16 @@ class TypeMovement extends Model
     public const SAIDA = 'saida';
     public const AJUSTE = 'ajuste';
 
-    /**
-     * Indicates if the model should be timestamped.
-     */
+    
     public $timestamps = false;
 
-    /**
-     * The table associated with the model.
-     */
+    
     protected $table = 'type_movement';
 
-    /**
-     * The attributes that are mass assignable.
-     */
+    
     protected $fillable = ['name'];
 
-    /**
-     * Stock movements associated with the type.
-     */
+    
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class, 'type_movement_id');

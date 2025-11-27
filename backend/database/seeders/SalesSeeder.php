@@ -21,9 +21,7 @@ class SalesSeeder extends Seeder
 {
     private const TARGET_ORDER_COUNT = 720;
 
-    /**
-     * Weighted distribution for realistic order statuses.
-     */
+    
     private const STATUS_WEIGHTS = [
         'pending_payment' => 0.12,
         'paid' => 0.18,
@@ -45,9 +43,7 @@ class SalesSeeder extends Seeder
         ['name' => 'FedEx', 'services' => ['Priority', 'Economy']],
     ];
 
-    /**
-     * Seed historic sales activity spanning the last 6 months.
-     */
+    
     public function run(): void
     {
         if (! Schema::hasTable('orders')) {
@@ -135,9 +131,7 @@ class SalesSeeder extends Seeder
         });
     }
 
-    /**
-     * Ensure there is a decent pool of customers to attach to orders.
-     */
+    
     private function prepareCustomers(): Collection
     {
         $minimumCustomers = 120;
@@ -166,9 +160,7 @@ class SalesSeeder extends Seeder
         return $customers;
     }
 
-    /**
-     * Reset order-related tables for a clean seed run.
-     */
+    
     private function resetOrderData(): void
     {
         $tables = [
@@ -197,9 +189,7 @@ class SalesSeeder extends Seeder
         }
     }
 
-    /**
-     * Detect whether orders are linked to the legacy addresses table.
-     */
+    
     private function detectAddressStrategy(): array
     {
         $columnType = null;
@@ -218,9 +208,7 @@ class SalesSeeder extends Seeder
         ];
     }
 
-    /**
-     * Guarantee each customer has at least two addresses available.
-     */
+    
     private function ensureAddresses(Collection $customers, FakerGenerator $faker, array $strategy): Collection
     {
         return $customers->mapWithKeys(function (User $user) use ($faker, $strategy) {
@@ -232,9 +220,7 @@ class SalesSeeder extends Seeder
         });
     }
 
-    /**
-     * Create or reuse an address entry for both modern and legacy schemas.
-     */
+    
     private function upsertAddressRecord(User $user, string $label, FakerGenerator $faker, array $strategy): array
     {
         $addressName = sprintf('%s - %s', $user->name, $label);
@@ -313,9 +299,7 @@ class SalesSeeder extends Seeder
         ];
     }
 
-    /**
-     * Decide which address identifier should be injected into the order.
-     */
+    
     private function resolveAddressIdForOrders(array $addressRecord, array $strategy): ?string
     {
         if ($strategy['useLegacy'] && $addressRecord['legacy_id']) {
@@ -329,9 +313,7 @@ class SalesSeeder extends Seeder
         return (string) ($addressRecord['legacy_id'] ?? $addressRecord['modern_id']);
     }
 
-    /**
-     * Build a realistic selection of order items for a given order.
-     */
+    
     private function buildOrderItems(Collection $products): Collection
     {
         $maxItems = max(1, min(5, $products->count()));
@@ -357,9 +339,7 @@ class SalesSeeder extends Seeder
         });
     }
 
-    /**
-     * Persist order items and return the created models for downstream usage.
-     */
+    
     private function persistOrderItems(Order $order, Collection $items): Collection
     {
         return $items->map(function (array $item) use ($order) {
@@ -375,9 +355,7 @@ class SalesSeeder extends Seeder
         });
     }
 
-    /**
-     * Insert timeline records describing each status transition.
-     */
+    
     private function seedStatusHistory(Order $order, string $finalStatus, Carbon $referenceDate): void
     {
         if (! Schema::hasTable('order_status_history')) {
@@ -408,9 +386,7 @@ class SalesSeeder extends Seeder
         }
     }
 
-    /**
-     * Create payment and transaction metadata for the order.
-     */
+    
     private function seedPayment(Order $order, string $orderStatus, float $amount, Carbon $orderDate): void
     {
         if (! Schema::hasTable('payments')) {
@@ -451,9 +427,7 @@ class SalesSeeder extends Seeder
         }
     }
 
-    /**
-     * Create shipment and tracking data for fulfilled orders.
-     */
+    
     private function seedShipment(Order $order, string $status, Collection $items, Carbon $orderDate): void
     {
         if (! Schema::hasTable('shipments') || ! in_array($status, ['shipped', 'delivered'], true)) {
@@ -490,9 +464,7 @@ class SalesSeeder extends Seeder
         }
     }
 
-    /**
-     * Translate order status into the payment status domain.
-     */
+    
     private function mapPaymentStatus(string $orderStatus): string
     {
         return match ($orderStatus) {
@@ -503,9 +475,7 @@ class SalesSeeder extends Seeder
         };
     }
 
-    /**
-     * Enumerate the chronological steps for a particular final status.
-     */
+    
     private function statusFlow(string $finalStatus): array
     {
         return match ($finalStatus) {
@@ -520,9 +490,7 @@ class SalesSeeder extends Seeder
         };
     }
 
-    /**
-     * Weighted random pick for order statuses.
-     */
+    
     private function pickOrderStatus(): string
     {
         $totalWeight = array_sum(self::STATUS_WEIGHTS);
@@ -539,9 +507,7 @@ class SalesSeeder extends Seeder
         return 'paid';
     }
 
-    /**
-     * Helper to create a random timestamp between two dates.
-     */
+    
     private function randomDateTimeBetween(Carbon $start, Carbon $end): Carbon
     {
         $timestamp = random_int($start->getTimestamp(), $end->getTimestamp());

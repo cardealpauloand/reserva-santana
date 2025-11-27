@@ -21,9 +21,7 @@ class StockController extends Controller
     {
     }
 
-    /**
-     * List products with their current stock levels.
-     */
+    
     public function products(): AnonymousResourceCollection
     {
         $currentStockSubquery = StockMovement::query()
@@ -47,9 +45,7 @@ class StockController extends Controller
         return StockProductResource::collection($products);
     }
 
-    /**
-     * List recent stock movements.
-     */
+    
     public function movements(Request $request): AnonymousResourceCollection
     {
         $limit = (int) $request->integer('limit', 20);
@@ -64,9 +60,7 @@ class StockController extends Controller
         return StockMovementResource::collection($movements);
     }
 
-    /**
-     * Register a new stock movement and update inventory counts.
-     */
+    
     public function storeMovement(Request $request): JsonResponse
     {
         $validated = $request->validate([

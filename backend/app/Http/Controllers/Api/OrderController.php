@@ -10,9 +10,7 @@ use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
-    /**
-     * List authenticated user's orders with order items.
-     */
+    
     public function index(Request $request)
     {
         $orders = $request->user()
@@ -24,16 +22,14 @@ class OrderController extends Controller
         return response()->json($orders);
     }
 
-    /**
-     * Create a new order with items.
-     */
+    
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'shipping_address' => 'required|array',
             'shipping_address.name' => 'required|string|max:255',
             'shipping_address.email' => 'nullable|email',
-            // phone: allow formatting, but must contain 10-11 digits
+            
             'shipping_address.phone' => ['nullable', 'string', 'regex:/^\D*(\d\D*){10,11}$/'],
             'shipping_address.zip_code' => ['required', 'string', 'max:10', 'regex:/^\D*(\d\D*){8}$/'],
             'shipping_address.street' => 'required|string|max:255',
@@ -61,13 +57,13 @@ class OrderController extends Controller
 
             $user = $request->user();
 
-            // Calculate total from items
+            
             $total = 0;
             foreach ($request->items as $item) {
                 $total += $item['quantity'] * $item['price_at_purchase'];
             }
 
-            // Create order
+            
             $order = $user->orders()->create([
                 'currency' => 'BRL',
                 'date' => now(),
@@ -82,7 +78,7 @@ class OrderController extends Controller
                 'created_by' => $user->id,
             ]);
 
-            // Create order items
+            
             foreach ($request->items as $item) {
                 $itemTotal = $item['quantity'] * $item['price_at_purchase'];
 
@@ -99,7 +95,7 @@ class OrderController extends Controller
 
             DB::commit();
 
-            // Load order items for response
+            
             $order->load('orderItems');
 
             return response()->json($order, 201);
@@ -113,9 +109,7 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * List all orders (admin only).
-     */
+    
     public function adminIndex(Request $request)
     {
         $orders = Order::with(['orderItems', 'user'])
@@ -125,9 +119,7 @@ class OrderController extends Controller
         return response()->json($orders);
     }
 
-    /**
-     * Update order status (admin only).
-     */
+    
     public function adminUpdate(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [

@@ -7,18 +7,14 @@ export interface UpdateProfileData {
 }
 
 export const profileService = {
-  /**
-   * Get the current user's profile
-   */
+  
   async getProfile(): Promise<Profile> {
     return await apiFetch<Profile>('/profile', {
       method: 'GET',
     });
   },
 
-  /**
-   * Update the current user's profile
-   */
+  
   async updateProfile(data: UpdateProfileData): Promise<Profile> {
     return await apiFetch<Profile>('/profile', {
       method: 'PUT',

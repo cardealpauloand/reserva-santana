@@ -10,12 +10,10 @@ use Illuminate\Support\Facades\Hash;
 
 class AdminSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    
     public function run(): void
     {
-        // Check if admin already exists
+        
         $adminExists = UserRole::where('role', 'admin')->exists();
 
         if ($adminExists) {
@@ -23,21 +21,21 @@ class AdminSeeder extends Seeder
             return;
         }
 
-        // Create admin user
+        
         $admin = User::create([
             'name' => 'Admin',
             'email' => 'admin@example.com',
-            'password' => Hash::make('password123'), // Change this in production!
+            'password' => Hash::make('password123'), 
         ]);
 
-        // Create profile for admin
+        
         Profile::create([
             'user_id' => $admin->id,
             'full_name' => 'Administrator',
             'phone' => null,
         ]);
 
-        // Assign admin role
+        
         UserRole::create([
             'user_id' => $admin->id,
             'role' => 'admin',

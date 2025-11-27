@@ -45,33 +45,25 @@ class Order extends Model
         'deleted_at' => 'datetime',
     ];
 
-    /**
-     * Get the user that owns the order.
-     */
+    
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the order items for the order.
-     */
+    
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
-    /**
-     * Get the shipping address.
-     */
+    
     public function shippingAddress(): BelongsTo
     {
         return $this->belongsTo(Address::class, 'shipping_address_id');
     }
 
-    /**
-     * Get the billing address.
-     */
+    
     public function billingAddress(): BelongsTo
     {
         return $this->belongsTo(Address::class, 'billing_address_id');

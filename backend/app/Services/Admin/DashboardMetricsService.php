@@ -179,7 +179,7 @@ class DashboardMetricsService
                 return $isStart ? $parsed->startOfDay() : $parsed->endOfDay();
             }
         } catch (\Throwable $exception) {
-            // Ignore invalid user input and fallback gracefully.
+            
         }
 
         return $isStart ? $fallback->copy()->startOfDay() : $fallback->copy()->endOfDay();

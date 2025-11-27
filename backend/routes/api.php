@@ -13,7 +13,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ShippingController;
 use Illuminate\Support\Facades\Route;
 
-// Public catalog routes
+
 Route::prefix('catalog')->group(function (): void {
     Route::get('products', [ProductController::class, 'index']);
     Route::get('products/{product}', [ProductController::class, 'show'])->whereNumber('product');
@@ -22,12 +22,12 @@ Route::prefix('catalog')->group(function (): void {
     Route::get('categories/{category:slug}', [CategoryController::class, 'show']);
 });
 
-// Authentication routes
+
 Route::prefix('auth')->group(function (): void {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
 
-    // Protected auth routes
+    
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('user', [AuthController::class, 'user']);
@@ -38,28 +38,28 @@ Route::prefix('shipping')->group(function (): void {
     Route::post('quote', [ShippingController::class, 'quote']);
 });
 
-// Protected user routes
+
 Route::middleware('auth:sanctum')->group(function (): void {
-    // Profile routes
+    
     Route::get('profile', [ProfileController::class, 'show']);
     Route::put('profile', [ProfileController::class, 'update']);
 
-    // Address routes
+    
     Route::get('addresses', [AddressController::class, 'index']);
     Route::post('addresses', [AddressController::class, 'store']);
     Route::delete('addresses/{id}', [AddressController::class, 'destroy']);
 
-    // Order routes
+    
     Route::get('orders', [OrderController::class, 'index']);
     Route::post('orders', [OrderController::class, 'store']);
 
-    // Cart routes
+    
     Route::get('cart', [CartController::class, 'show']);
     Route::put('cart', [CartController::class, 'sync']);
     Route::delete('cart', [CartController::class, 'clear']);
 });
 
-// Admin routes
+
 Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->group(function (): void {
     Route::get('dashboard', DashboardController::class);
     Route::apiResource('products', AdminProductController::class)->except(['create', 'edit']);
@@ -70,7 +70,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->group(function ()
         Route::post('movements', [StockController::class, 'storeMovement']);
     });
 
-    // Admin order management
+    
     Route::get('orders', [OrderController::class, 'adminIndex']);
     Route::patch('orders/{id}', [OrderController::class, 'adminUpdate']);
 });

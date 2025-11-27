@@ -32,9 +32,7 @@ class Address extends Model
         'updated_at' => 'datetime',
     ];
 
-    /**
-     * Get the user that owns the address.
-     */
+    
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

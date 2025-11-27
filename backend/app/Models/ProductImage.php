@@ -10,14 +10,10 @@ class ProductImage extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that aren't mass assignable.
-     */
+    
     protected $guarded = [];
 
-    /**
-     * Parent product.
-     */
+    
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

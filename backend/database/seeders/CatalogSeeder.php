@@ -14,9 +14,7 @@ use Illuminate\Support\Str;
 
 class CatalogSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    
     public function run(): void
     {
         $inventoryService = app(InventoryService::class);
@@ -353,7 +351,7 @@ class CatalogSeeder extends Seeder
                     'categories' => ['premium-reserva','tintos', 'premium-importados','premium-raros'],
                 ],
 
-                /* kits harmonização */
+                
                 [
                     'name' => 'kit Harmonizado Vinho Tinto + Massa e Molho Pesto',
                     'slug' => 'kit-harmonizado-vinho-tinto-massa-molho-pesto',
@@ -417,7 +415,7 @@ class CatalogSeeder extends Seeder
 
 
 
-                /*kit best sellers*/
+                
                 [
                     'name' => 'Kit 4 Best Sellers',
                     'slug' => 'kit-4-best-sellers',
@@ -464,7 +462,7 @@ class CatalogSeeder extends Seeder
                     'image_url' => 'https://res.cloudinary.com/evino/image/upload/q_auto:good,fl_progressive:steep,f_auto,dpr_2.0,h_215/v1/products/0279491-standing-front.png',
                     'categories' => ['kit-best-sellers','tintos'],
                 ],
-                /*kit refrescantes*/
+                
                 [
                     'name' => 'Kit 10 Vinhos Refrescantes',
                     'slug' => 'kit-10-vinhos-refrescantes',
@@ -528,7 +526,7 @@ class CatalogSeeder extends Seeder
 
 
 
-                /*kits primitivos*/
+                
                 [
                     'name' => 'Kit 5 Casale Brondello Primitivo di Manduria DOC + Bolsa Exclusiva',
                     'slug' => 'kit-5-casale-brondello-primitivo-di-manduria-doc-bolsa-exclusiva',
@@ -591,7 +589,7 @@ class CatalogSeeder extends Seeder
                     'categories' => ['kit-primitivo','tintos'],
                 ],
              
-                /*kits barolo*/
+                
 
                 [
                      'name' => 'Kit Leve 4 Pague 2 Terre da Vino Barolo',
@@ -657,7 +655,7 @@ class CatalogSeeder extends Seeder
                     'categories' => ['kit-barolo','tintos'], 
                 ],
                 
-                /*kits uvas iconicas*/
+                
                 [
                     'name' => 'Kit Uvas Icônicas | 10 garrafas',
                     'slug' => 'kit-uvas-iconicas-10-garrafas',
@@ -750,9 +748,7 @@ class CatalogSeeder extends Seeder
         });
     }
 
-    /**
-     * Reset catalog related tables for a clean seed.
-     */
+    
     private function resetTables(): void
     {
         $tables = [

@@ -10,9 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ProductController extends Controller
 {
-    /**
-     * List catalog products with optional filters.
-     */
+    
     public function index(Request $request)
     {
         $products = Product::query()
@@ -48,9 +46,7 @@ class ProductController extends Controller
         return ProductResource::collection($products);
     }
 
-    /**
-     * Show a single product.
-     */
+    
     public function show(Product $product)
     {
         if (! $product->active) {

@@ -80,7 +80,7 @@ const Profile = () => {
     setLoadingAddresses(true);
     try {
       const data = await addressesService.getAddresses();
-      // Sort by is_default first
+      
       const sorted = data.sort((a, b) => (b.is_default ? 1 : 0) - (a.is_default ? 1 : 0));
       setAddresses(sorted);
     } catch (error) {
@@ -99,7 +99,7 @@ const Profile = () => {
     e.preventDefault();
     if (!user) return;
 
-    // Client-side validation: phone must have 10-11 digits
+    
     const digits = (profile.phone || "").replace(/\D+/g, "");
     if (digits.length < 10 || digits.length > 11) {
       toast({
@@ -226,7 +226,7 @@ const Profile = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Profile Info */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle>Informações Pessoais</CardTitle>
@@ -284,7 +284,7 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          {/* Addresses */}
+          {}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">

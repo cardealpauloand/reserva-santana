@@ -266,7 +266,7 @@ const ProductDetail = () => {
                   className="transition-transform duration-150 ease-out max-h-72 md:max-h-96 lg:max-h-[28rem] w-auto h-auto max-w-full object-contain p-2 select-none pointer-events-none"
                   draggable={false}
                 />
-                {/* Ícone de lupa seguindo o cursor */}
+                {}
                 {!isZoomed && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <Search className="h-8 w-8 text-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity" />

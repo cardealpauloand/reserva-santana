@@ -15,9 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ProductController extends Controller
 {
-    /**
-     * List products for administration.
-     */
+    
     public function index(Request $request)
     {
         $currentStockSubquery = StockMovement::query()
@@ -57,9 +55,7 @@ class ProductController extends Controller
         return ProductResource::collection($products);
     }
 
-    /**
-     * Create a new product.
-     */
+    
     public function store(Request $request)
     {
         $validated = $this->validateProduct($request);
@@ -88,17 +84,13 @@ class ProductController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
-    /**
-     * Display a single product.
-     */
+    
     public function show(Product $product)
     {
         return ProductResource::make($product->loadMissing(['categories', 'primaryImage']));
     }
 
-    /**
-     * Update an existing product.
-     */
+    
     public function update(Request $request, Product $product)
     {
         $validated = $this->validateProduct($request, $product);
@@ -129,9 +121,7 @@ class ProductController extends Controller
         return ProductResource::make($product->fresh(['categories', 'primaryImage']));
     }
 
-    /**
-     * Soft delete a product.
-     */
+    
     public function destroy(Product $product): JsonResponse
     {
         $product->delete();
@@ -139,11 +129,7 @@ class ProductController extends Controller
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    /**
-     * Validate incoming product data.
-     *
-     * @return array<string, mixed>
-     */
+    
     private function validateProduct(Request $request, ?Product $product = null): array
     {
         $productId = $product?->id;
@@ -167,19 +153,13 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Synchronize category relationships.
-     *
-     * @param  array<int, int>  $categoryIds
-     */
+    
     private function syncCategories(Product $product, array $categoryIds): void
     {
         $product->categories()->sync($categoryIds);
     }
 
-    /**
-     * Ensure the product has an up-to-date primary image.
-     */
+    
     private function syncPrimaryImage(Product $product, ?string $imageUrl): void
     {
         if (! $imageUrl) {
@@ -197,9 +177,7 @@ class ProductController extends Controller
         );
     }
 
-    /**
-     * Generate a unique slug for the product.
-     */
+    
     private function generateSlug(string $name, ?int $ignoreId = null): string
     {
         $baseSlug = Str::slug($name);

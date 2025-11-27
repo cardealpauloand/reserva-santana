@@ -39,7 +39,7 @@ const Auth = () => {
         description: "Conta criada com sucesso.",
       });
 
-      // Reload the page to trigger AuthContext to load user
+      
       window.location.href = "/";
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -74,7 +74,7 @@ const Auth = () => {
         description: "Login realizado com sucesso.",
       });
 
-      // Reload the page to trigger AuthContext to load user
+      
       window.location.href = "/";
     } catch (error) {
       if (error instanceof z.ZodError) {

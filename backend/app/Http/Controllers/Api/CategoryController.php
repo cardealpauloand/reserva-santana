@@ -9,9 +9,7 @@ use App\Models\Category;
 
 class CategoryController extends Controller
 {
-    /**
-     * List catalog categories with product counts.
-     */
+    
     public function index()
     {
         $categories = Category::query()
@@ -22,9 +20,7 @@ class CategoryController extends Controller
         return CategorySummaryResource::collection($categories);
     }
 
-    /**
-     * Show category details and associated products.
-     */
+    
     public function show(Category $category)
     {
         $category->load([

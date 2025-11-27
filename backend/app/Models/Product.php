@@ -15,14 +15,10 @@ class Product extends Model
     use HasFactory;
     use SoftDeletes;
 
-    /**
-     * The attributes that aren't mass assignable.
-     */
+    
     protected $guarded = [];
 
-    /**
-     * Attribute casting.
-     */
+    
     protected $casts = [
         'price' => 'decimal:2',
         'original_price' => 'decimal:2',
@@ -30,39 +26,29 @@ class Product extends Model
         'stock_quantity' => 'integer',
     ];
 
-    /**
-     * Default eager loads.
-     */
+    
     protected $with = ['primaryImage'];
 
-    /**
-     * Scope for active products.
-     */
+    
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('active', true);
     }
 
-    /**
-     * Categories this product belongs to.
-     */
+    
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class, 'product_category')
             ->withTimestamps();
     }
 
-    /**
-     * All images for the product.
-     */
+    
     public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class)->orderBy('position');
     }
 
-    /**
-     * Primary image for the product.
-     */
+    
     public function primaryImage(): HasOne
     {
         return $this->hasOne(ProductImage::class)
@@ -70,17 +56,13 @@ class Product extends Model
             ->orderBy('position');
     }
 
-    /**
-     * Stock records for the product across warehouses.
-     */
+    
     public function stockRecords(): HasMany
     {
         return $this->hasMany(ProductStock::class, 'product_id');
     }
 
-    /**
-     * Inventory movements linked to the product.
-     */
+    
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class, 'product_id');

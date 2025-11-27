@@ -36,33 +36,25 @@ class OrderItem extends Model
         'unit_price',
     ];
 
-    /**
-     * Alias accessor to keep backward compatibility with legacy unit_price field.
-     */
+    
     public function getUnitPriceAttribute(): ?string
     {
         return $this->attributes['price_at_purchase'] ?? null;
     }
 
-    /**
-     * Alias mutator converting unit_price assignments into price_at_purchase.
-     */
+    
     public function setUnitPriceAttribute($value): void
     {
         $this->attributes['price_at_purchase'] = $value;
     }
 
-    /**
-     * Get the order that owns the order item.
-     */
+    
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    /**
-     * Get the product for the order item.
-     */
+    
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

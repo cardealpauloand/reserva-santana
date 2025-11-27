@@ -10,14 +10,10 @@ class StockMovement extends Model
 {
     use HasFactory;
 
-    /**
-     * The table associated with the model.
-     */
+    
     protected $table = 'stock_movement';
 
-    /**
-     * The attributes that are mass assignable.
-     */
+    
     protected $fillable = [
         'product_id',
         'variant_id',
@@ -32,34 +28,26 @@ class StockMovement extends Model
         'updated_by',
     ];
 
-    /**
-     * Attribute casting.
-     */
+    
     protected $casts = [
         'quantity' => 'integer',
         'current_quantity' => 'integer',
         'price' => 'decimal:2',
     ];
 
-    /**
-     * Product associated with the movement.
-     */
+    
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class)->withTrashed();
     }
 
-    /**
-     * Movement type relation.
-     */
+    
     public function typeMovement(): BelongsTo
     {
         return $this->belongsTo(TypeMovement::class, 'type_movement_id');
     }
 
-    /**
-     * Warehouse where the movement occurred.
-     */
+    
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class);
