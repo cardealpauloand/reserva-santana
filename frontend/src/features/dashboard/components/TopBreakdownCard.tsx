@@ -27,6 +27,7 @@ interface TopBreakdownCardProps {
   hasComparisonRange: boolean;
   emptyPrimaryMessage: string;
   emptyComparisonMessage: string;
+  showActiveLabel?: boolean;
 }
 
 export const TopBreakdownCard = ({
@@ -40,6 +41,7 @@ export const TopBreakdownCard = ({
   hasComparisonRange,
   emptyPrimaryMessage,
   emptyComparisonMessage,
+  showActiveLabel = true,
 }: TopBreakdownCardProps) => {
   const activeData = isComparisonView ? comparisonData : primaryData;
   const activeLabel = isComparisonView ? comparisonLabel || "Período comparativo" : primaryLabel || "Período principal";
@@ -56,9 +58,11 @@ export const TopBreakdownCard = ({
           <CardTitle>{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </div>
-        <span className="inline-flex items-center rounded-full bg-muted/60 px-3 py-1 text-xs font-medium text-muted-foreground">
-          {activeLabel}
-        </span>
+        {showActiveLabel && (
+          <span className="inline-flex items-center rounded-full bg-muted/60 px-3 py-1 text-xs font-medium text-muted-foreground">
+            {activeLabel}
+          </span>
+        )}
       </CardHeader>
       <CardContent>
         {activeData.length === 0 ? (

@@ -15,6 +15,7 @@ interface TopCustomersCardProps {
   hasComparisonRange: boolean;
   primaryLabel: string;
   comparisonLabel: string;
+  showActiveLabel?: boolean;
 }
 
 export const TopCustomersCard = ({
@@ -24,6 +25,7 @@ export const TopCustomersCard = ({
   hasComparisonRange,
   primaryLabel,
   comparisonLabel,
+  showActiveLabel = true,
 }: TopCustomersCardProps) => {
   const activeCustomers = isComparisonView ? comparisonCustomers : customers;
   const activeLabel = isComparisonView
@@ -42,9 +44,11 @@ export const TopCustomersCard = ({
           <CardTitle>Clientes em Destaque</CardTitle>
           <CardDescription>Clientes que mais geraram receita no período selecionado</CardDescription>
         </div>
-        <span className="inline-flex items-center rounded-full bg-muted/60 px-3 py-1 text-xs font-medium text-muted-foreground">
-          {activeLabel}
-        </span>
+        {showActiveLabel && (
+          <span className="inline-flex items-center rounded-full bg-muted/60 px-3 py-1 text-xs font-medium text-muted-foreground">
+            {activeLabel}
+          </span>
+        )}
       </CardHeader>
       <CardContent>
         {activeCustomers.length === 0 ? (
