@@ -46,6 +46,8 @@ import {
   User as UserIcon,
 } from "lucide-react";
 
+const ITEMS_PER_PAGE = 8;
+
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
@@ -65,6 +67,7 @@ const AdminOrders = () => {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const ensureStatusOptions = useCallback((status: string) => {
     if (ADMIN_ORDER_STATUS_OPTIONS.some((option) => option.value === status)) {
@@ -86,6 +89,7 @@ const AdminOrders = () => {
     try {
       const data = await listAdminOrders();
       setOrders(data);
+      setCurrentPage(1);
     } catch (error) {
       const message =
         error instanceof Error
@@ -147,6 +151,26 @@ const AdminOrders = () => {
     () => orders.reduce((sum, order) => sum + (order.total ?? 0), 0),
     [orders]
   );
+
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(orders.length / ITEMS_PER_PAGE)),
+    [orders.length]
+  );
+
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return orders.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [currentPage, orders]);
+
+  const pageStart = orders.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const pageEnd = Math.min(currentPage * ITEMS_PER_PAGE, orders.length);
+
+  useEffect(() => {
+    const nextTotalPages = Math.max(1, Math.ceil(orders.length / ITEMS_PER_PAGE));
+    if (currentPage > nextTotalPages) {
+      setCurrentPage(nextTotalPages);
+    }
+  }, [currentPage, orders.length]);
 
   const renderLoading = () => (
     <div className="py-24 flex items-center justify-center">
@@ -242,7 +266,7 @@ const AdminOrders = () => {
           </Card>
         ) : (
           <div className="space-y-6">
-            {orders.map((order) => {
+            {paginatedOrders.map((order) => {
               const meta = ADMIN_ORDER_STATUS_META[order.status] ?? {
                 label: order.status,
                 badgeVariant: "secondary" as const,
@@ -395,6 +419,39 @@ const AdminOrders = () => {
                 </Card>
               );
             })}
+
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                {orders.length === 0
+                  ? "Nenhum pedido para exibir."
+                  : `Mostrando ${pageStart} - ${pageEnd} de ${orders.length} pedidos`}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Página {currentPage} de {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((page) =>
+                      Math.min(totalPages, page + 1)
+                    )
+                  }
+                  disabled={currentPage === totalPages || orders.length === 0}
+                >
+                  Próxima
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </main>
