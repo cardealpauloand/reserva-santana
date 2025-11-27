@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { Sparkles, Wine, Award, TrendingUp } from "lucide-react";
 import heroImage from "@/assets/hero-wine.jpg";
 import {
@@ -89,16 +90,11 @@ export const HeroCarousel = () => {
                       </p>
                       
                       <div className="flex flex-wrap gap-4">
-                        <Button variant="hero" size="lg">
-                          Ver Ofertas
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="lg"
-                          className="bg-card/10 backdrop-blur-sm border-primary-foreground/30 text-primary-foreground hover:bg-card/20"
-                        >
-                          Explorar Catálogo
-                        </Button>
+                        <Link to="/catalogo">
+                          <Button variant="hero" size="lg">
+                            Ver Catálogo
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   </div>
