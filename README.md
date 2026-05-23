@@ -31,9 +31,9 @@ O projeto existe para demonstrar um fluxo completo de ecommerce aplicado a uma v
 - Bloqueio visual de idade via `AgeGate`.
 
 ### Carrinho E Checkout
+- Carrinho com itens, quantidades, total e limpeza.
 <img width="1414" height="626" alt="image" src="https://github.com/user-attachments/assets/1f17c8f0-413f-4846-a186-bbb2770e0116" />
 
-- Carrinho com itens, quantidades, total e limpeza.
 - Checkout em etapas com endereco, cotacao de frete e pagamento simulado.
 - Cadastro e reutilizacao de enderecos do usuario autenticado.
 <img width="1414" height="808" alt="image" src="https://github.com/user-attachments/assets/453da7dd-90cb-4b0b-9117-24b657c64159" />
@@ -49,22 +49,19 @@ O projeto existe para demonstrar um fluxo completo de ecommerce aplicado a uma v
 
 
 ### Administracao
+- Dashboard com metricas, comparacao por periodo, receita e rankings.
 <img width="1248" height="1022" alt="image" src="https://github.com/user-attachments/assets/385766ad-fb87-4ac8-8bd1-b2eccfa1bcfe" />
 
 <img width="1248" height="1022" alt="image" src="https://github.com/user-attachments/assets/c671ac2d-f83c-4c28-9218-613d43aecd52" />
-- Dashboard com metricas, comparacao por periodo, receita e rankings.
-- <img width="1414" height="543" alt="image" src="https://github.com/user-attachments/assets/eb61242e-e361-462c-a680-1e1e96335fb6" />
-
 - Gestao de produtos em `/produtos`.
-![Uploading image.png…]()
-
+- <img width="1414" height="543" alt="image" src="https://github.com/user-attachments/assets/eb61242e-e361-462c-a680-1e1e96335fb6" />
 - Gestao de estoque em `/estoque`, com entradas e saidas.
 <img width="1414" height="543" alt="image" src="https://github.com/user-attachments/assets/ec155a63-d10f-4320-a333-839d4dc475b6" />
-
 - Gestao de pedidos em `/admin/pedidos`.
+<img width="1414" height="998" alt="image" src="https://github.com/user-attachments/assets/b91a27d3-b548-464e-af1d-41892c79cf20" />
+
 
 ### Backend E Dados
-> Substitua por uma print de ferramenta API ou banco mostrando endpoints/dados do projeto.
 - API REST em Laravel para catalogo, autenticacao, carrinho, checkout, enderecos e admin.
 - Controle de permissao admin via middleware.
 - Migrations e seeders para catalogo, estoque, usuarios e vendas simuladas.
