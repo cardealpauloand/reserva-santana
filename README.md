@@ -26,24 +26,30 @@ O projeto existe para demonstrar um fluxo completo de ecommerce aplicado a uma v
 
 ## Funcionalidades
 ### Vitrine E Catalogo
-> Substitua por uma print da pagina `/catalogo` mostrando listagem de vinhos e filtros.
+<img width="1248" height="1022" alt="image" src="https://github.com/user-attachments/assets/6b9f88d7-c2de-46a9-a468-9f1a0c86e825" />
+
 - Listagem de produtos por catalogo, busca e categoria.
 - Pagina de detalhes por produto.
 - Carrossel principal, destaques e grade de produtos na home.
 - Bloqueio visual de idade via `AgeGate`.
 
 ### Carrinho E Checkout
-> Substitua por uma print da pagina `/carrinho` mostrando produtos adicionados e resumo do pedido.
+<img width="1414" height="626" alt="image" src="https://github.com/user-attachments/assets/1f17c8f0-413f-4846-a186-bbb2770e0116" />
+
 - Carrinho com itens, quantidades, total e limpeza.
 - Checkout em etapas com endereco, cotacao de frete e pagamento simulado.
 - Cadastro e reutilizacao de enderecos do usuario autenticado.
+<img width="1414" height="808" alt="image" src="https://github.com/user-attachments/assets/453da7dd-90cb-4b0b-9117-24b657c64159" />
+
 - Criacao de pedidos simulados sem cobranca real.
 
 ### Conta Do Cliente
-> Substitua por uma print da pagina `/perfil` mostrando dados do usuario e enderecos.
+<img width="1414" height="626" alt="image" src="https://github.com/user-attachments/assets/0d51ed03-4b7e-4db1-b25a-1db371b95247" />
+
 - Registro, login, logout e sessao via Laravel Sanctum.
 - Perfil do usuario autenticado.
-- Historico de pedidos em `/pedidos`.
+<img width="1414" height="454" alt="image" src="https://github.com/user-attachments/assets/9f5f34ce-6589-4b50-a835-35a05df1465b" />
+
 
 ### Administracao
 > Substitua por uma print da pagina `/dashboard` mostrando indicadores administrativos.
