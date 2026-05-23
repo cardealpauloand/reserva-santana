@@ -11,13 +11,18 @@ O projeto existe para demonstrar um fluxo completo de ecommerce aplicado a uma v
 - Praticar desenvolvimento full stack com API Laravel, frontend React e banco PostgreSQL em Docker.
 
 ## Demonstração Do Fluxo
-> Substitua por uma print da pagina `/` mostrando vitrine, carrossel principal e produtos em destaque.
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/0cf6fa30-b1c3-462c-b3b8-eb5d6139cbbe" />
+
 1. Cliente acessa a pagina inicial, confirma idade e navega pelos vinhos.
 2. Cliente abre detalhes do produto, adiciona itens ao carrinho e segue para checkout.
-> Substitua por uma print da pagina `/checkout` mostrando etapas de entrega, frete, pagamento e confirmacao.
+<img width="1248" height="1022" alt="image" src="https://github.com/user-attachments/assets/6e24e238-0f5e-4887-930a-6960a0b500f7" />
+
 3. Sistema registra pedido simulado e atualiza fluxo de pedidos do usuario.
 4. Administrador acompanha metricas, produtos, pedidos e estoque nas telas protegidas.
-> Substitua por uma print da pagina `/dashboard` mostrando cards de metricas, grafico de receita e produtos mais vendidos.
+<img width="1248" height="1022" alt="image" src="https://github.com/user-attachments/assets/385766ad-fb87-4ac8-8bd1-b2eccfa1bcfe" />
+
+<img width="1248" height="1022" alt="image" src="https://github.com/user-attachments/assets/c671ac2d-f83c-4c28-9218-613d43aecd52" />
+
 
 ## Funcionalidades
 ### Vitrine E Catalogo
