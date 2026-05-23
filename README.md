@@ -19,9 +19,6 @@ O projeto existe para demonstrar um fluxo completo de ecommerce aplicado a uma v
 
 3. Sistema registra pedido simulado e atualiza fluxo de pedidos do usuario.
 4. Administrador acompanha metricas, produtos, pedidos e estoque nas telas protegidas.
-<img width="1248" height="1022" alt="image" src="https://github.com/user-attachments/assets/385766ad-fb87-4ac8-8bd1-b2eccfa1bcfe" />
-
-<img width="1248" height="1022" alt="image" src="https://github.com/user-attachments/assets/c671ac2d-f83c-4c28-9218-613d43aecd52" />
 
 
 ## Funcionalidades
@@ -52,10 +49,18 @@ O projeto existe para demonstrar um fluxo completo de ecommerce aplicado a uma v
 
 
 ### Administracao
-> Substitua por uma print da pagina `/dashboard` mostrando indicadores administrativos.
+<img width="1248" height="1022" alt="image" src="https://github.com/user-attachments/assets/385766ad-fb87-4ac8-8bd1-b2eccfa1bcfe" />
+
+<img width="1248" height="1022" alt="image" src="https://github.com/user-attachments/assets/c671ac2d-f83c-4c28-9218-613d43aecd52" />
 - Dashboard com metricas, comparacao por periodo, receita e rankings.
+- <img width="1414" height="543" alt="image" src="https://github.com/user-attachments/assets/eb61242e-e361-462c-a680-1e1e96335fb6" />
+
 - Gestao de produtos em `/produtos`.
+![Uploading image.png…]()
+
 - Gestao de estoque em `/estoque`, com entradas e saidas.
+<img width="1414" height="543" alt="image" src="https://github.com/user-attachments/assets/ec155a63-d10f-4320-a333-839d4dc475b6" />
+
 - Gestao de pedidos em `/admin/pedidos`.
 
 ### Backend E Dados
